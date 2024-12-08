@@ -1,0 +1,460 @@
+File Path: src\app\form-builder\page.tsx
+Contents:
+import React from 'react'
+import FormBuilder from './_components/FormBuilder'
+
+const page = () => {
+  return (
+	<div className='w-full h-[100vh]'>
+		<FormBuilder />
+	</div>
+  )
+}
+
+export default page
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\design-context\index.tsx
+Contents:
+import React, { createContext, useState, ReactNode, useContext } from "react";
+import { ElementsTypes, FormElement, FormElements } from "../types";
+import { FormElementTypes } from "../types/elements";
+
+interface FormElementsContextType {
+  formElements: FormElements;
+  addFormElement: (type: keyof FormElements) => void;
+  updateFormElementPayload: (
+    id: string,
+    updatedPayload: Partial<FormElement["payload"]>
+  ) => void;
+  removeFormElement: (id: string) => void;
+}
+
+const FormElementsContext = createContext<FormElementsContextType | undefined>(
+  undefined
+);
+
+interface FormElementsProviderProps {
+  children: ReactNode;
+}
+
+export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
+  children,
+}) => {
+  const [formElements, setFormElements] = useState<FormElements>({});
+
+  const addFormElement = (type: keyof FormElements) => {
+    const element = new FormElement(
+      type as ElementsTypes,
+      FormElementTypes[type].sidebarElement.icon,
+      FormElementTypes[type].sidebarElement.label
+    );
+    setFormElements((prev) => ({
+      ...prev,
+      [element.id]: element,
+    }));
+  };
+
+  const updateFormElementPayload = (
+    id: string,
+    updatedPayload: Partial<FormElement["payload"]>
+  ) => {
+    setFormElements((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        payload: { ...prev[id].payload, ...updatedPayload },
+      },
+    }));
+  };
+
+  const removeFormElement = (id: string) => {
+    setFormElements((prev) => {
+      const newElements = { ...prev };
+      delete newElements[id];
+      return newElements;
+    });
+  };
+
+  return (
+    <FormElementsContext.Provider
+      value={{ formElements, addFormElement, updateFormElementPayload, removeFormElement }}
+    >
+      {children}
+    </FormElementsContext.Provider>
+  );
+};
+
+export const useFormElements = (): FormElementsContextType => {
+  const context = useContext(FormElementsContext);
+  if (!context) {
+    throw new Error("useFormElements must be used within a FormElementsProvider");
+  }
+  return context;
+};
+
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\design-mode\index.tsx
+Contents:
+import { useDroppable } from "@dnd-kit/core";
+import React, { useState } from "react";
+import DragOverlayWrapper from "../drag-overlay/DragOverlay";
+import SideBarButtons from "../sidebar-elements";
+import { FormElement } from "../types";
+import { useFormElements } from "../design-context";
+import RootFormDesignElement from "../form-design-elements/RootFormDesignElement";
+import { FormElementTypes } from "../types/elements";
+
+const DesignMode = () => {
+	const { formElements } = useFormElements();
+	const dropable = useDroppable({
+		id: "designer-drop-area",
+		data: {
+			isDesignerDropArea: true,
+		},
+	});
+	return (
+		<div
+			className={`w-full h-full grid grid-cols-[1fr,300px] gap-3 bg-slate-900 graph-content`}
+		>
+			<div className="w-full h-full overflow-y-auto p-5 flex justify-center items-center">
+				<div
+					ref={dropable.setNodeRef}
+					className={`w-[80%] rounded-md p-5 h-full bg-slate-950 ${
+						dropable.isOver && "ring-2 ring-primary"
+					}`}
+				>
+					{Object.keys(formElements).length === 0 &&
+						!dropable.isOver && (
+							<span className="w-full h-full flex justify-center items-center text-white">
+								Drop the element
+							</span>
+						)}
+
+					{Object.keys(formElements).length>0&&Object.keys(formElements).map((item:string)=>{
+						return <RootFormDesignElement type={formElements[item].type} key={item} />
+					})}
+				</div>
+			</div>
+			<div className="w-full h-full overflow-y-auto py-4 bg-slate-950">
+				<SideBarButtons />
+			</div>
+			<DragOverlayWrapper />
+		</div>
+	);
+};
+
+export default DesignMode;
+
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\drag-overlay\DragOverlay.tsx
+Contents:
+"use client";
+
+import React, { useState } from "react";
+import { DragableOverlayButton } from "../sidebar-elements";
+import { Active, DragOverlay, useDndMonitor, DragEndEvent } from "@dnd-kit/core";
+import { FormElementTypes } from "../types/elements";
+import { useFormElements } from "../design-context";
+
+const DragOverlayWrapper = () => {
+  const { addFormElement, formElements } = useFormElements();
+  const [dragableItems, setDragableItems] = useState<Active | null>(null);
+
+  useDndMonitor({
+    onDragStart: (event) => {
+      setDragableItems(event.active);
+      console.log("Drag Start", event.active);
+      console.log("Form Elements After Drag Start:", formElements);
+    },
+    onDragCancel: (event) => {
+      setDragableItems(null);
+      console.log("Drag Canceled", event);
+      console.log("Form Elements After Drag Cancel:", formElements);
+    },
+    onDragEnd: (event: DragEndEvent) => {
+      const { active, over } = event;
+
+      if (
+        over?.id === "designer-drop-area" &&
+        active.data.current?.isDesignBtnElement
+      ) {
+        const type = active.data.current?.type;
+
+        if (type in FormElementTypes) {
+          addFormElement(type);
+        }
+      }
+
+      setDragableItems(null);
+      console.log("Drag End", event);
+      console.log("Form Elements After Drag End:", formElements);
+    },
+  });
+
+  if (!dragableItems) return null;
+
+  const isSidebarButtonElement =
+    dragableItems.data?.current?.isDesignBtnElement;
+
+  let node = <div>No Drag Overlay</div>;
+
+  if (isSidebarButtonElement) {
+    const type = dragableItems.data?.current?.type;
+
+    if (type in FormElementTypes) {
+      node = (
+        <DragableOverlayButton
+          icon={FormElementTypes[type].sidebarElement.icon}
+          label={FormElementTypes[type].sidebarElement.label}
+        />
+      );
+    }
+  }
+
+  console.log("Current Dragable Item:", dragableItems);
+  console.log("Current Form Elements:", formElements);
+
+  return <DragOverlay>{node}</DragOverlay>;
+};
+
+export default DragOverlayWrapper;
+
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\form-design-elements\NumberField.tsx
+Contents:
+import React from 'react'
+import { FormElement } from '../types'
+
+const NumberField = ({formElement}:{formElement:FormElement}) => {
+  return (
+	<div>NumberField</div>
+  )
+}
+
+export default NumberField
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\form-design-elements\RootFormDesignElement.tsx
+Contents:
+import React from "react";
+import { ElementsTypes } from "../types";
+import TextField from "./TextField";
+import NumberField from "./NumberField";
+import { FormElementTypes } from "../types/elements";
+
+const RootFormDesignElement = ({ type }: { type: ElementsTypes }) => {
+  switch (type) {
+    case "TextField":
+      return <TextField formElement={FormElementTypes[type]} />;
+    case "NumberField":
+      return <NumberField formElement={FormElementTypes[type]} />;
+    default:
+      return <div>Unsupported Element</div>;
+  }
+};
+
+export default RootFormDesignElement;
+
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\form-design-elements\TextField.tsx
+Contents:
+import React from 'react'
+import { FormElement } from '../types'
+
+const TextField = ({formElement}:{formElement:FormElement}) => {
+  return (
+	<div>TextField</div>
+  )
+}
+
+export default TextField
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\FormBuilder.tsx
+Contents:
+// pages/index.tsx
+"use client";
+
+import { DndContext } from "@dnd-kit/core";
+import { useState } from "react";
+import { PiSunBold } from "react-icons/pi";
+import { PiMoonStarsBold } from "react-icons/pi";
+import { FormElementsProvider } from "./design-context";
+import DesignMode from "./design-mode";
+
+export default function FormBuilder() {
+	const [theme, setTheme] = useState<boolean>(false);
+
+	return (
+		<DndContext>
+			<FormElementsProvider>
+				<div className="w-full h-full grid grid-rows-[80px,_1fr]">
+					<div className="w-full h-full flex justify-between items-center px-5 border-b-1 border-b-gray-800">
+						<h1 className={`text-xl text-white`}>Project 1</h1>
+						<div className="w-auto h-auto flex justify-center items-center border-1 border-gray-800 rounded-md gap-1 px-1 relative">
+							<button
+								className={`w-7 h-7 rounded-md p-1 relative z-20 transition-all duration-300 ${
+									theme ? "text-white" : "text-gray-700"
+								}`}
+								onClick={() => setTheme(true)}
+							>
+								<PiSunBold className="w-full h-full" />
+							</button>
+							<button
+								className={`w-7 h-8 rounded-md p-1 relative z-20 transition-all duration-300 ${
+									theme ? "text-gray-700" : "text-white"
+								}`}
+								onClick={() => setTheme(false)}
+							>
+								<PiMoonStarsBold className="w-full h-full" />
+							</button>
+							<span
+								className={`w-7 h-6 rounded-md bg-primary-500 absolute transition-all duration-300 ${
+									theme ? "left-1" : "left-9"
+								}`}
+							/>
+						</div>
+					</div>
+					<DesignMode />
+				</div>
+			</FormElementsProvider>
+		</DndContext>
+	);
+}
+
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\sidebar-elements\index.tsx
+Contents:
+import { FormElement } from "@/app/form-builder/_components/types";
+import { FormElementTypes } from "@/app/form-builder/_components/types/elements";
+import { useDraggable } from "@dnd-kit/core";
+import React from "react";
+
+const SideBarButtons = () => {
+	return (
+		<div className="w-full h-auto grid grid-cols-2 gap-3 px-3">
+			{Object.keys(FormElementTypes).map((items: string) => (
+				<DragableButton
+					formElement={FormElementTypes[items]}
+					key={FormElementTypes[items].id}
+				/>
+			))}
+		</div>
+	);
+};
+
+export default SideBarButtons;
+
+const DragableButton = ({ formElement }: { formElement: FormElement }) => {
+	const { icon: Icon, label } = formElement.sidebarElement;
+	const dragable = useDraggable({
+		id: "design-btn-" + formElement.type,
+		data: {
+			isDesignBtnElement: true,
+			type: formElement.type,
+		},
+	});
+	return (
+		<button
+			ref={dragable.setNodeRef}
+			className={`w-full h-auto p-3 rounded-md border-divider border-1 place-items-center grid grid-cols-1 ${
+				dragable.isDragging && "ring-2 ring-primary"
+			}`}
+			{...dragable.listeners}
+			{...dragable.attributes}
+		>
+			<Icon className="w-7 h-7 text-white" />
+			<span className="text-sm text-white">{label}</span>
+		</button>
+	);
+};
+
+interface OverlayButton {
+	icon: React.ElementType;
+	label: string;
+}
+
+export const DragableOverlayButton = (element: OverlayButton) => {
+	const { icon: Icon, label } = element;
+	return (
+		<button
+			className={`w-full h-auto p-3 rounded-md border-divider border-1 place-items-center grid grid-cols-1`}
+		>
+			<Icon className="w-7 h-7 text-white" />
+			<span className="text-sm text-white">{label}</span>
+		</button>
+	);
+};
+
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\types\elements.ts
+Contents:
+// elements.ts
+
+import { FormElement, FormElements } from ".";
+import { MdTextFields } from "react-icons/md";
+
+export const FormElementTypes: FormElements = {
+  TextField: new FormElement("TextField", MdTextFields, "Text Field"),
+  NumberField: new FormElement("NumberField", MdTextFields, "Number Field"),
+};
+
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\types\index.ts
+Contents:
+// types/index.d.ts
+
+import React from "react";
+
+export type ElementsTypes = "TextField" | "PasswordField" | "NumberField";
+
+export interface FormElementPayload {
+  name: string;
+  required?: boolean;
+  placeholder?: string;
+  options?: string[];
+  type?: string;
+}
+
+export class FormElement {
+  id: string;
+  type: ElementsTypes;
+  sidebarElement: {
+    icon: React.ElementType;
+    label: string;
+  };
+  payload: FormElementPayload;
+
+  constructor(
+    type: ElementsTypes,
+    icon: React.ElementType,
+    label: string,
+    payload?: Partial<FormElementPayload>
+  ) {
+    this.id = crypto.randomUUID();
+    this.type = type;
+    this.sidebarElement = { icon, label };
+    this.payload = {
+      name: label.toLowerCase().replace(/\s+/g, "-"),
+      required: false,
+      placeholder: `Enter ${label.toLowerCase()}...`,
+      type,
+      ...payload,
+    };
+  }
+}
+
+export type FormElements = {
+  [formElementId: string]: FormElement;
+};
+
+--------------------------------------------------
+
