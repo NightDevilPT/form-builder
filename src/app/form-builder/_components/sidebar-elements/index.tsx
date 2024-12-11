@@ -54,7 +54,7 @@ export const DragableOverlayButton = (element: OverlayButton) => {
 			className={`w-full h-auto p-3 rounded-md border-divider border-1 bg-slate-950 place-items-center grid grid-cols-1`}
 		>
 			<Icon className="w-7 h-7 text-white" />
-			<span className="text-sm text-white">{label}</span>
+			<span className="text-xs text-white">{label}</span>
 		</button>
 	);
 };

@@ -1,17 +1,18 @@
 File Path: src\app\form-builder\page.tsx
 Contents:
-import React from 'react'
-import FormBuilder from './_components/FormBuilder'
+import React from 'react';
+import FormBuilder from './_components/FormBuilder';
 
-const page = () => {
+const Page = () => {
   return (
-	<div className='w-full h-[100vh]'>
-		<FormBuilder />
-	</div>
-  )
-}
+    <div className="w-full h-screen">
+      <FormBuilder />
+    </div>
+  );
+};
 
-export default page
+export default Page;
+
 --------------------------------------------------
 
 File Path: src\app\form-builder\_components\design-context\index.tsx
@@ -21,120 +22,141 @@ import { ElementsTypes, FormElement, FormElements } from "../types";
 import { FormElementTypes } from "../types/elements";
 
 interface FormElementsContextType {
-  formElements: FormElements;
-  addFormElement: (type: keyof FormElements) => void;
-  updateFormElementPayload: (
-    id: string,
-    updatedPayload: Partial<FormElement["payload"]>
-  ) => void;
-  removeFormElement: (id: string) => void;
+	formElements: FormElements;
+	order: string[];
+	addFormElement: (type: keyof FormElements) => void;
+	updateFormElementPayload: (
+		id: string,
+		updatedPayload: Partial<FormElement["payload"]>
+	) => void;
+	removeFormElement: (id: string) => void;
+	updateOrder: (newOrder: string[]) => void; // New function to update the order
 }
 
 const FormElementsContext = createContext<FormElementsContextType | undefined>(
-  undefined
+	undefined
 );
 
 interface FormElementsProviderProps {
-  children: ReactNode;
+	children: ReactNode;
 }
 
 export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
-  children,
+	children,
 }) => {
-  const [formElements, setFormElements] = useState<FormElements>({});
+	const [formElements, setFormElements] = useState<FormElements>({});
+	const [order, setOrder] = useState<string[]>([]);
 
-  const addFormElement = (type: keyof FormElements) => {
-    const element = new FormElement(
-      type as ElementsTypes,
-      FormElementTypes[type].sidebarElement.icon,
-      FormElementTypes[type].sidebarElement.label
-    );
-    setFormElements((prev) => ({
-      ...prev,
-      [element.id]: element,
-    }));
-  };
+	const addFormElement = (type: keyof FormElements):string  => {
+		const element = new FormElement(
+			type as ElementsTypes,
+			FormElementTypes[type].sidebarElement.icon,
+			FormElementTypes[type].sidebarElement.label
+		);
+		setFormElements((prev) => ({ ...prev, [element.id]: element }));
+		return element.id;
+	};
 
-  const updateFormElementPayload = (
-    id: string,
-    updatedPayload: Partial<FormElement["payload"]>
-  ) => {
-    setFormElements((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        payload: { ...prev[id].payload, ...updatedPayload },
-      },
-    }));
-  };
+	const updateFormElementPayload = (
+		id: string,
+		updatedPayload: Partial<FormElement["payload"]>
+	) => {
+		setFormElements((prev) => ({
+			...prev,
+			[id]: {
+				...prev[id],
+				payload: { ...prev[id].payload, ...updatedPayload },
+			},
+		}));
+	};
 
-  const removeFormElement = (id: string) => {
-    setFormElements((prev) => {
-      const newElements = { ...prev };
-      delete newElements[id];
-      return newElements;
-    });
-  };
+	const removeFormElement = (id: string) => {
+		setFormElements((prev) => {
+			const newElements = { ...prev };
+			delete newElements[id];
+			return newElements;
+		});
+		setOrder((prevOrder) =>
+			prevOrder.filter((elementId) => elementId !== id)
+		);
+	};
 
-  return (
-    <FormElementsContext.Provider
-      value={{ formElements, addFormElement, updateFormElementPayload, removeFormElement }}
-    >
-      {children}
-    </FormElementsContext.Provider>
-  );
+	// Update order function
+	const updateOrder = (newOrder: string[]) => {
+		setOrder(newOrder);
+	};
+
+	return (
+		<FormElementsContext.Provider
+			value={{
+				formElements,
+				order,
+				addFormElement,
+				updateFormElementPayload,
+				removeFormElement,
+				updateOrder,
+			}}
+		>
+			{children}
+		</FormElementsContext.Provider>
+	);
 };
 
 export const useFormElements = (): FormElementsContextType => {
-  const context = useContext(FormElementsContext);
-  if (!context) {
-    throw new Error("useFormElements must be used within a FormElementsProvider");
-  }
-  return context;
+	const context = useContext(FormElementsContext);
+	if (!context) {
+		throw new Error(
+			"useFormElements must be used within a FormElementsProvider"
+		);
+	}
+	return context;
 };
 
 --------------------------------------------------
 
 File Path: src\app\form-builder\_components\design-mode\index.tsx
 Contents:
+import React from "react";
 import { useDroppable } from "@dnd-kit/core";
-import React, { useState } from "react";
-import DragOverlayWrapper from "../drag-overlay/DragOverlay";
 import SideBarButtons from "../sidebar-elements";
-import { FormElement } from "../types";
 import { useFormElements } from "../design-context";
 import RootFormDesignElement from "../form-design-elements/RootFormDesignElement";
-import { FormElementTypes } from "../types/elements";
+import DragOverlayWrapper from "../drag-overlay/DragOverlay";
 
 const DesignMode = () => {
-	const { formElements } = useFormElements();
-	const dropable = useDroppable({
+	const { formElements,order } = useFormElements();
+	const dropArea = useDroppable({
 		id: "designer-drop-area",
-		data: {
-			isDesignerDropArea: true,
-		},
+		data: { isDesignerDropArea: true },
 	});
+
 	return (
-		<div
-			className={`w-full h-full grid grid-cols-[1fr,300px] gap-3 bg-slate-900 graph-content`}
-		>
+		<div className="w-full h-full grid grid-cols-[1fr,350px] gap-3 bg-slate-900 graph-content">
 			<div className="w-full h-full overflow-y-auto p-5 flex justify-center items-center">
 				<div
-					ref={dropable.setNodeRef}
-					className={`w-[80%] rounded-md p-5 h-full bg-slate-950 ${
-						dropable.isOver && "ring-2 ring-primary"
+					ref={dropArea.setNodeRef}
+					className={`w-4/5 h-full space-y-3 p-5 rounded-md bg-slate-950 ${
+						dropArea.isOver ? "ring-2 ring-primary" : ""
 					}`}
 				>
-					{Object.keys(formElements).length === 0 &&
-						!dropable.isOver && (
-							<span className="w-full h-full flex justify-center items-center text-white">
-								Drop the element
-							</span>
-						)}
+					{/* Display message when the order is empty and the drop area is not hovered */}
+          {order.length === 0 && !dropArea.isOver && (
+            <span className="text-white">Drop the element</span>
+          )}
 
-					{Object.keys(formElements).length>0&&Object.keys(formElements).map((item:string)=>{
-						return <RootFormDesignElement type={formElements[item].type} key={item} />
-					})}
+          {/* Show a visual indication when the drop area is hovered, and there are items */}
+          {dropArea.isOver && order.length === 0 && (
+            <div className="w-full p-1">
+              <div className="w-full h-[120px] rounded-md bg-primary/10"></div>
+            </div>
+          )}
+					{Object.keys(formElements).map((key) => (
+						<RootFormDesignElement
+							key={key}
+							type={formElements[key].type}
+							id={formElements[key].id}
+						/>
+					))}
 				</div>
 			</div>
 			<div className="w-full h-full overflow-y-auto py-4 bg-slate-950">
@@ -155,69 +177,111 @@ Contents:
 
 import React, { useState } from "react";
 import { DragableOverlayButton } from "../sidebar-elements";
-import { Active, DragOverlay, useDndMonitor, DragEndEvent } from "@dnd-kit/core";
+import {
+	Active,
+	DragOverlay,
+	useDndMonitor,
+	DragEndEvent,
+} from "@dnd-kit/core";
 import { FormElementTypes } from "../types/elements";
 import { useFormElements } from "../design-context";
+import { FormElement } from "../types";
+import RootFormDesignElement from "../form-design-elements/RootFormDesignElement";
 
 const DragOverlayWrapper = () => {
-  const { addFormElement, formElements } = useFormElements();
-  const [dragableItems, setDragableItems] = useState<Active | null>(null);
+	const { addFormElement, formElements, order, updateOrder } =
+		useFormElements();
+	const [dragableItems, setDragableItems] = useState<Active | null>(null);
 
-  useDndMonitor({
-    onDragStart: (event) => {
-      setDragableItems(event.active);
-      console.log("Drag Start", event.active);
-      console.log("Form Elements After Drag Start:", formElements);
-    },
-    onDragCancel: (event) => {
-      setDragableItems(null);
-      console.log("Drag Canceled", event);
-      console.log("Form Elements After Drag Cancel:", formElements);
-    },
-    onDragEnd: (event: DragEndEvent) => {
-      const { active, over } = event;
+	// Monitor drag events
+	useDndMonitor({
+		onDragStart: (event) => {
+			setDragableItems(event.active);
+			console.log("Drag Start", event.active);
+		},
+		onDragCancel: () => {
+			setDragableItems(null);
+			console.log("Drag Canceled");
+		},
+		onDragEnd: (event: DragEndEvent) => {
+			const { active, over } = event;
 
-      if (
-        over?.id === "designer-drop-area" &&
-        active.data.current?.isDesignBtnElement
-      ) {
-        const type = active.data.current?.type;
-
+			if (
+				over?.id === "designer-drop-area" &&
+				active.data.current?.isDesignBtnElement
+			) {
+				const type = active.data.current?.type;
         if (type in FormElementTypes) {
-          addFormElement(type);
+          const elementId = addFormElement(type); // Get the element's ID
+          updateOrder([...order, elementId]); // Update the order with the new element
         }
-      }
+			} else if (over?.id) {
+				const overData: string = over.id as string;
+				const [overId, position] = overData.split(":");
 
-      setDragableItems(null);
-      console.log("Drag End", event);
-      console.log("Form Elements After Drag End:", formElements);
-    },
-  });
+				const elementIndex = order.findIndex(
+					(id: string) => id === overId
+				);
 
-  if (!dragableItems) return null;
+				if (active?.id.contains("design-btn-")) {
+					const type = active.data.current?.type;
+					if (type in FormElementTypes) {
+						addFormElement(type);
+					}
+				}else{
 
-  const isSidebarButtonElement =
-    dragableItems.data?.current?.isDesignBtnElement;
+        }
 
-  let node = <div>No Drag Overlay</div>;
+				if (elementIndex !== -1) {
+					let updatedOrder = [...order];
 
-  if (isSidebarButtonElement) {
-    const type = dragableItems.data?.current?.type;
+					if (position === "top") {
+						updatedOrder.splice(elementIndex, 0, active.id);
+					} else {
+						updatedOrder.splice(elementIndex + 1, 0, active.id);
+					}
 
-    if (type in FormElementTypes) {
-      node = (
-        <DragableOverlayButton
-          icon={FormElementTypes[type].sidebarElement.icon}
-          label={FormElementTypes[type].sidebarElement.label}
-        />
-      );
-    }
-  }
+					updateOrder(updatedOrder);
+				}
+			}
 
-  console.log("Current Dragable Item:", dragableItems);
-  console.log("Current Form Elements:", formElements);
+			setDragableItems(null);
+			console.log("Drag End", event);
+		},
+	});
 
-  return <DragOverlay>{node}</DragOverlay>;
+	// If there's nothing to drag, return null
+	if (!dragableItems) return null;
+
+	// Check if the current draggable is from the sidebar
+	const isSidebarButtonElement =
+		dragableItems.data?.current?.isDesignBtnElement;
+
+	let node = <div>No Drag Overlay</div>;
+
+	if (isSidebarButtonElement) {
+		const type = dragableItems.data?.current?.type;
+
+		if (type in FormElementTypes) {
+			node = (
+				<DragableOverlayButton
+					icon={FormElementTypes[type].sidebarElement.icon}
+					label={FormElementTypes[type].sidebarElement.label}
+				/>
+			);
+		}
+	}
+
+	const isDesignerElement = dragableItems.data?.current?.isDesignerElement;
+	if (isDesignerElement) {
+		const id = dragableItems.data.current?.elementId;
+		const type = dragableItems.data?.current?.type;
+		const element = order.find(
+			(formElementId: string) => formElementId === id
+		);
+	}
+
+	return <DragOverlay>{node}</DragOverlay>;
 };
 
 export default DragOverlayWrapper;
@@ -238,23 +302,121 @@ const NumberField = ({formElement}:{formElement:FormElement}) => {
 export default NumberField
 --------------------------------------------------
 
+File Path: src\app\form-builder\_components\form-design-elements\PasswordField.tsx
+Contents:
+import React from 'react'
+import { FormElement } from '../types'
+
+const PasswordField = ({formElement}:{formElement:FormElement}) => {
+  return (
+	<div>PasswordField</div>
+  )
+}
+
+export default PasswordField
+--------------------------------------------------
+
 File Path: src\app\form-builder\_components\form-design-elements\RootFormDesignElement.tsx
 Contents:
-import React from "react";
+import React, { useState } from "react";
 import { ElementsTypes } from "../types";
 import TextField from "./TextField";
 import NumberField from "./NumberField";
 import { FormElementTypes } from "../types/elements";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { FaRegTrashAlt } from "react-icons/fa";
+import PasswordField from "./PasswordField";
 
-const RootFormDesignElement = ({ type }: { type: ElementsTypes }) => {
-  switch (type) {
-    case "TextField":
-      return <TextField formElement={FormElementTypes[type]} />;
-    case "NumberField":
-      return <NumberField formElement={FormElementTypes[type]} />;
-    default:
-      return <div>Unsupported Element</div>;
-  }
+const RootFormDesignElement = ({
+	type,
+	id,
+}: {
+	type: ElementsTypes;
+	id: string;
+}) => {
+	const [mouseIsOver, setMouseIsOver] = useState<boolean>(false);
+	const topHalf = useDroppable({
+		id: id + ":top",
+		data: {
+			type,
+			elementId: id,
+			isTopHalfDesignerElement: true,
+		},
+	});
+	const bottomHalf = useDroppable({
+		id: id + ":bottom",
+		data: {
+			type,
+			elementId: id,
+			isBottomHalfDesignerElement: true,
+		},
+	});
+
+	const dragable = useDraggable({
+		id: id + "-drag-handler",
+		data: {
+			type,
+			elementId: id,
+			isDesignerElement: true,
+		},
+	});
+
+	return (
+		<div
+			className="relative w-full h-auto p-4 rounded-md border-1 border-divider overflow-hidden"
+			onMouseEnter={() => setMouseIsOver(true)}
+			onMouseLeave={() => setMouseIsOver(false)}
+			ref={dragable.setNodeRef}
+			{...dragable.listeners}
+			{...dragable.attributes}
+		>
+			<div
+				className="w-full h-1/2 rounded-full absolute top-0 left-0"
+				ref={topHalf.setNodeRef}
+			></div>
+			{getContent(type)}
+			<div
+				className="w-full h-1/2 rounded-full absolute bottom-0 left-0"
+				ref={bottomHalf.setNodeRef}
+			></div>
+			{topHalf.isOver && (
+				<div className="w-full h-1 rounded-full bg-white absolute top-0 left-0"></div>
+			)}
+			{bottomHalf.isOver && (
+				<div className="w-full h-1 rounded-full bg-white absolute bottom-0 left-0"></div>
+			)}
+			{mouseIsOver && (
+				<div className="w-full h-full absolute left-0 top-0 bg-slate-800/20 backdrop-blur grid grid-cols-[_1fr,40px] cursor-grab">
+					<span
+						className={`w-full h-full flex justify-center items-center text-gray-500`}
+					>
+						Click or Drag and Drop to move element
+					</span>
+					<div className="w-full h-full bg-red-500 flex justify-center items-center cursor-pointer">
+						<FaRegTrashAlt className="w-4 h-4 text-white" />
+					</div>
+				</div>
+			)}
+		</div>
+	);
+};
+
+const getContent = (type: ElementsTypes) => {
+	let content;
+	switch (type) {
+		case "TextField":
+			content = <TextField formElement={FormElementTypes[type]} />;
+			break;
+		case "NumberField":
+			content = <NumberField formElement={FormElementTypes[type]} />;
+			break;
+		case "PasswordField":
+			content = <PasswordField formElement={FormElementTypes[type]} />;
+			break;
+		default:
+			content = <div>Unsupported Element</div>;
+	}
+	return content;
 };
 
 export default RootFormDesignElement;
@@ -277,55 +439,40 @@ export default TextField
 
 File Path: src\app\form-builder\_components\FormBuilder.tsx
 Contents:
-// pages/index.tsx
-"use client";
+'use client';
 
-import { DndContext } from "@dnd-kit/core";
-import { useState } from "react";
-import { PiSunBold } from "react-icons/pi";
-import { PiMoonStarsBold } from "react-icons/pi";
-import { FormElementsProvider } from "./design-context";
-import DesignMode from "./design-mode";
+import { DndContext } from '@dnd-kit/core';
+import React, { useState } from 'react';
+import { PiSunBold, PiMoonStarsBold } from 'react-icons/pi';
+import { FormElementsProvider } from './design-context';
+import DesignMode from './design-mode';
 
-export default function FormBuilder() {
-	const [theme, setTheme] = useState<boolean>(false);
+const FormBuilder = () => {
+  const [theme, setTheme] = useState<boolean>(false);
 
-	return (
-		<DndContext>
-			<FormElementsProvider>
-				<div className="w-full h-full grid grid-rows-[80px,_1fr]">
-					<div className="w-full h-full flex justify-between items-center px-5 border-b-1 border-b-gray-800">
-						<h1 className={`text-xl text-white`}>Project 1</h1>
-						<div className="w-auto h-auto flex justify-center items-center border-1 border-gray-800 rounded-md gap-1 px-1 relative">
-							<button
-								className={`w-7 h-7 rounded-md p-1 relative z-20 transition-all duration-300 ${
-									theme ? "text-white" : "text-gray-700"
-								}`}
-								onClick={() => setTheme(true)}
-							>
-								<PiSunBold className="w-full h-full" />
-							</button>
-							<button
-								className={`w-7 h-8 rounded-md p-1 relative z-20 transition-all duration-300 ${
-									theme ? "text-gray-700" : "text-white"
-								}`}
-								onClick={() => setTheme(false)}
-							>
-								<PiMoonStarsBold className="w-full h-full" />
-							</button>
-							<span
-								className={`w-7 h-6 rounded-md bg-primary-500 absolute transition-all duration-300 ${
-									theme ? "left-1" : "left-9"
-								}`}
-							/>
-						</div>
-					</div>
-					<DesignMode />
-				</div>
-			</FormElementsProvider>
-		</DndContext>
-	);
-}
+  return (
+    <DndContext>
+      <FormElementsProvider>
+        <div className="w-full h-full grid grid-rows-[80px,1fr]">
+          <div className="w-full flex justify-between items-center px-5 border-b border-gray-800">
+            <h1 className="text-xl text-white">Project 1</h1>
+            <div className="flex items-center gap-1 relative">
+              <button className={`w-7 h-7 p-1 ${theme ? 'text-white' : 'text-gray-700'}`} onClick={() => setTheme(true)}>
+                <PiSunBold />
+              </button>
+              <button className={`w-7 h-7 p-1 ${theme ? 'text-gray-700' : 'text-white'}`} onClick={() => setTheme(false)}>
+                <PiMoonStarsBold />
+              </button>
+            </div>
+          </div>
+          <DesignMode />
+        </div>
+      </FormElementsProvider>
+    </DndContext>
+  );
+};
+
+export default FormBuilder;
 
 --------------------------------------------------
 
@@ -370,7 +517,7 @@ const DragableButton = ({ formElement }: { formElement: FormElement }) => {
 			{...dragable.attributes}
 		>
 			<Icon className="w-7 h-7 text-white" />
-			<span className="text-sm text-white">{label}</span>
+			<span className="text-xs text-white">{label}</span>
 		</button>
 	);
 };
@@ -384,10 +531,10 @@ export const DragableOverlayButton = (element: OverlayButton) => {
 	const { icon: Icon, label } = element;
 	return (
 		<button
-			className={`w-full h-auto p-3 rounded-md border-divider border-1 place-items-center grid grid-cols-1`}
+			className={`w-full h-auto p-3 rounded-md border-divider border-1 bg-slate-950 place-items-center grid grid-cols-1`}
 		>
 			<Icon className="w-7 h-7 text-white" />
-			<span className="text-sm text-white">{label}</span>
+			<span className="text-xs text-white">{label}</span>
 		</button>
 	);
 };
@@ -400,12 +547,16 @@ Contents:
 
 import { FormElement, FormElements } from ".";
 import { MdTextFields } from "react-icons/md";
+import { TbNumber123 } from "react-icons/tb";
+import { TbPasswordUser } from "react-icons/tb";
 
 export const FormElementTypes: FormElements = {
   TextField: new FormElement("TextField", MdTextFields, "Text Field"),
-  NumberField: new FormElement("NumberField", MdTextFields, "Number Field"),
+  NumberField: new FormElement("NumberField", TbNumber123, "Number Field"),
+  PasswordField: new FormElement("PasswordField", TbPasswordUser, "Password Field"),
 };
 
+// export const 
 --------------------------------------------------
 
 File Path: src\app\form-builder\_components\types\index.ts
