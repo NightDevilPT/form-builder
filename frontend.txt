@@ -31,6 +31,8 @@ interface FormElementsContextType {
 	) => void;
 	removeFormElement: (id: string) => void;
 	updateOrder: (newOrder: string[]) => void; // New function to update the order
+	setSelectedElement: (id: string | null) => void;
+	selectedElementId: string | null;
 }
 
 const FormElementsContext = createContext<FormElementsContextType | undefined>(
@@ -46,8 +48,11 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 }) => {
 	const [formElements, setFormElements] = useState<FormElements>({});
 	const [order, setOrder] = useState<string[]>([]);
+	const [selectedElementId, setSelectedElementId] = useState<string | null>(
+		null
+	);
 
-	const addFormElement = (type: keyof FormElements):string  => {
+	const addFormElement = (type: keyof FormElements): string => {
 		const element = new FormElement(
 			type as ElementsTypes,
 			FormElementTypes[type].sidebarElement.icon,
@@ -86,6 +91,10 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 		setOrder(newOrder);
 	};
 
+	const setSelectedElement = (id: string | null) => {
+		setSelectedElementId(id);
+	};
+
 	return (
 		<FormElementsContext.Provider
 			value={{
@@ -95,6 +104,8 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 				updateFormElementPayload,
 				removeFormElement,
 				updateOrder,
+				setSelectedElement,
+				selectedElementId,
 			}}
 		>
 			{children}
@@ -150,7 +161,7 @@ const DesignMode = () => {
               <div className="w-full h-[120px] rounded-md bg-primary/10"></div>
             </div>
           )}
-					{Object.keys(formElements).map((key) => (
+					{order.map((key) => (
 						<RootFormDesignElement
 							key={key}
 							type={formElements[key].type}
@@ -185,11 +196,10 @@ import {
 } from "@dnd-kit/core";
 import { FormElementTypes } from "../types/elements";
 import { useFormElements } from "../design-context";
-import { FormElement } from "../types";
 import RootFormDesignElement from "../form-design-elements/RootFormDesignElement";
 
 const DragOverlayWrapper = () => {
-	const { addFormElement, formElements, order, updateOrder } =
+	const { addFormElement, setSelectedElement, order, updateOrder } =
 		useFormElements();
 	const [dragableItems, setDragableItems] = useState<Active | null>(null);
 
@@ -211,10 +221,11 @@ const DragOverlayWrapper = () => {
 				active.data.current?.isDesignBtnElement
 			) {
 				const type = active.data.current?.type;
-        if (type in FormElementTypes) {
-          const elementId = addFormElement(type); // Get the element's ID
-          updateOrder([...order, elementId]); // Update the order with the new element
-        }
+				if (type in FormElementTypes) {
+					const elementId:string = addFormElement(type);
+					order.push(elementId as string)
+					updateOrder(order);
+				}
 			} else if (over?.id) {
 				const overData: string = over.id as string;
 				const [overId, position] = overData.split(":");
@@ -222,30 +233,62 @@ const DragOverlayWrapper = () => {
 				const elementIndex = order.findIndex(
 					(id: string) => id === overId
 				);
+				console.log(active, "ACTIVEIDDD");
 
-				if (active?.id.contains("design-btn-")) {
+				if (!active.data?.current?.elementId) {
 					const type = active.data.current?.type;
-					if (type in FormElementTypes) {
-						addFormElement(type);
+
+					if (type && type in FormElementTypes) {
+						const elementId = addFormElement(type); // Create new form element
+
+						if (elementId) {
+							const updatedOrder = [...order];
+							if (position === "top" && elementIndex !== -1) {
+								updatedOrder.splice(elementIndex, 0, elementId); // Insert before
+							} else if (
+								position === "bottom" &&
+								elementIndex !== -1
+							) {
+								updatedOrder.splice(
+									elementIndex + 1,
+									0,
+									elementId
+								); // Insert after
+							}
+							updateOrder(updatedOrder); // Update the order with new element
+						}
 					}
-				}else{
-
-        }
-
-				if (elementIndex !== -1) {
+				} else if (
+					elementIndex !== -1 &&
+					active?.data?.current?.elementId
+				) {
 					let updatedOrder = [...order];
+					updatedOrder = updatedOrder.filter(
+						(id) => id !== active?.data?.current?.elementId
+					);
+					updateOrder(updatedOrder);
 
+					// Now, insert the dragged element in the correct position (top or bottom)
 					if (position === "top") {
-						updatedOrder.splice(elementIndex, 0, active.id);
+						updatedOrder.splice(
+							elementIndex,
+							0,
+							active?.data?.current?.elementId as string
+						); // Insert before
 					} else {
-						updatedOrder.splice(elementIndex + 1, 0, active.id);
+						updatedOrder.splice(
+							elementIndex + 1,
+							0,
+							active?.data?.current?.elementId as string
+						); // Insert after
 					}
 
-					updateOrder(updatedOrder);
+					updateOrder(updatedOrder); // Update the order after reordering
 				}
 			}
 
 			setDragableItems(null);
+			setSelectedElement(null);
 			console.log("Drag End", event);
 		},
 	});
@@ -279,6 +322,8 @@ const DragOverlayWrapper = () => {
 		const element = order.find(
 			(formElementId: string) => formElementId === id
 		);
+		console.log(element);
+		node = <RootFormDesignElement type={type} id={id} />;
 	}
 
 	return <DragOverlay>{node}</DragOverlay>;
@@ -294,6 +339,7 @@ import React from 'react'
 import { FormElement } from '../types'
 
 const NumberField = ({formElement}:{formElement:FormElement}) => {
+  console.log(formElement)
   return (
 	<div>NumberField</div>
   )
@@ -308,6 +354,7 @@ import React from 'react'
 import { FormElement } from '../types'
 
 const PasswordField = ({formElement}:{formElement:FormElement}) => {
+  console.log(formElement)
   return (
 	<div>PasswordField</div>
   )
@@ -326,6 +373,7 @@ import { FormElementTypes } from "../types/elements";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { FaRegTrashAlt } from "react-icons/fa";
 import PasswordField from "./PasswordField";
+import { useFormElements } from "../design-context";
 
 const RootFormDesignElement = ({
 	type,
@@ -335,6 +383,7 @@ const RootFormDesignElement = ({
 	id: string;
 }) => {
 	const [mouseIsOver, setMouseIsOver] = useState<boolean>(false);
+	const { setSelectedElement } = useFormElements();
 	const topHalf = useDroppable({
 		id: id + ":top",
 		data: {
@@ -353,7 +402,7 @@ const RootFormDesignElement = ({
 	});
 
 	const dragable = useDraggable({
-		id: id + "-drag-handler",
+		id: id + ":drag-handler",
 		data: {
 			type,
 			elementId: id,
@@ -369,6 +418,11 @@ const RootFormDesignElement = ({
 			ref={dragable.setNodeRef}
 			{...dragable.listeners}
 			{...dragable.attributes}
+			onClick={(e) => {
+				e.stopPropagation()
+				setSelectedElement(id)
+				console.log(id,'ID CONSOLING')
+			}}
 		>
 			<div
 				className="w-full h-1/2 rounded-full absolute top-0 left-0"
@@ -429,6 +483,7 @@ import React from 'react'
 import { FormElement } from '../types'
 
 const TextField = ({formElement}:{formElement:FormElement}) => {
+  console.log(formElement)
   return (
 	<div>TextField</div>
   )

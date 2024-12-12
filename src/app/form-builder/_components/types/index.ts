@@ -1,5 +1,3 @@
-// types/index.d.ts
-
 import React from "react";
 
 export type ElementsTypes = "TextField" | "PasswordField" | "NumberField";
@@ -25,9 +23,9 @@ export class FormElement {
     type: ElementsTypes,
     icon: React.ElementType,
     label: string,
-    payload?: Partial<FormElementPayload>
+    payload: Partial<FormElementPayload> = {}
   ) {
-    this.id = crypto.randomUUID();
+    this.id = `${crypto.randomUUID()}`;
     this.type = type;
     this.sidebarElement = { icon, label };
     this.payload = {

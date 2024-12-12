@@ -34,13 +34,13 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 	);
 
 	const addFormElement = (type: keyof FormElements): string => {
-		const element = new FormElement(
+		const element:FormElement = new FormElement(
 			type as ElementsTypes,
 			FormElementTypes[type].sidebarElement.icon,
 			FormElementTypes[type].sidebarElement.label
 		);
 		setFormElements((prev) => ({ ...prev, [element.id]: element }));
-		return element.id;
+		return element.id; // return the ID of the new form element
 	};
 
 	const updateFormElementPayload = (
