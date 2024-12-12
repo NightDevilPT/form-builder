@@ -6,6 +6,7 @@ import { FormElementTypes } from "../types/elements";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { FaRegTrashAlt } from "react-icons/fa";
 import PasswordField from "./PasswordField";
+import { useFormElements } from "../design-context";
 
 const RootFormDesignElement = ({
 	type,
@@ -15,6 +16,7 @@ const RootFormDesignElement = ({
 	id: string;
 }) => {
 	const [mouseIsOver, setMouseIsOver] = useState<boolean>(false);
+	const { setSelectedElement } = useFormElements();
 	const topHalf = useDroppable({
 		id: id + ":top",
 		data: {
@@ -33,7 +35,7 @@ const RootFormDesignElement = ({
 	});
 
 	const dragable = useDraggable({
-		id: id + "-drag-handler",
+		id: id + ":drag-handler",
 		data: {
 			type,
 			elementId: id,
@@ -49,6 +51,11 @@ const RootFormDesignElement = ({
 			ref={dragable.setNodeRef}
 			{...dragable.listeners}
 			{...dragable.attributes}
+			onClick={(e) => {
+				e.stopPropagation()
+				setSelectedElement(id)
+				console.log(id,'ID CONSOLING')
+			}}
 		>
 			<div
 				className="w-full h-1/2 rounded-full absolute top-0 left-0"

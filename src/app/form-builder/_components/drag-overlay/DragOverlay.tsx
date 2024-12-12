@@ -10,11 +10,10 @@ import {
 } from "@dnd-kit/core";
 import { FormElementTypes } from "../types/elements";
 import { useFormElements } from "../design-context";
-import { FormElement } from "../types";
 import RootFormDesignElement from "../form-design-elements/RootFormDesignElement";
 
 const DragOverlayWrapper = () => {
-	const { addFormElement, formElements, order, updateOrder } =
+	const { addFormElement, setSelectedElement, order, updateOrder } =
 		useFormElements();
 	const [dragableItems, setDragableItems] = useState<Active | null>(null);
 
@@ -38,7 +37,7 @@ const DragOverlayWrapper = () => {
 				const type = active.data.current?.type;
 				if (type in FormElementTypes) {
 					const elementId = addFormElement(type); // Get the element's ID
-          const reorder:any = [...order,elementId]
+					const reorder = [...order, elementId];
 					updateOrder(reorder);
 				}
 			} else if (over?.id) {
@@ -48,33 +47,62 @@ const DragOverlayWrapper = () => {
 				const elementIndex = order.findIndex(
 					(id: string) => id === overId
 				);
-        console.log(active,'ACTIVEIDDD')
+				console.log(active, "ACTIVEIDDD");
 
-				if ((active?.id as string).includes("design-btn-")) {
-          const type = active.data.current?.type;
-          let elementId:any;
-    
-          if (type && type in FormElementTypes) {
-            elementId = addFormElement(type); // Create new form element
-          }
-    
-          if (elementId) {
-            let updatedOrder = [...order];
-            console.log(updatedOrder,'ORDER UPDATED !')
-    
-            if (position === "top" && elementIndex !== -1) {
-              updatedOrder.splice(elementIndex, 0, elementId); // Insert before
-            } else if (position === "bottom" && elementIndex !== -1) {
-              updatedOrder.splice(elementIndex + 1, 0, elementId); // Insert after
-            }
-            console.log(updatedOrder,'ORDER UPDATED 2')
-    
-            updateOrder(updatedOrder); // Update the order with new element
-          }
-        }
+				if (!active.data?.current?.elementId) {
+					const type = active.data.current?.type;
+
+					if (type && type in FormElementTypes) {
+						const elementId = addFormElement(type); // Create new form element
+
+						if (elementId) {
+							const updatedOrder = [...order];
+							if (position === "top" && elementIndex !== -1) {
+								updatedOrder.splice(elementIndex, 0, elementId); // Insert before
+							} else if (
+								position === "bottom" &&
+								elementIndex !== -1
+							) {
+								updatedOrder.splice(
+									elementIndex + 1,
+									0,
+									elementId
+								); // Insert after
+							}
+							updateOrder(updatedOrder); // Update the order with new element
+						}
+					}
+				} else if (
+					elementIndex !== -1 &&
+					active?.data?.current?.elementId
+				) {
+					let updatedOrder = [...order];
+					updatedOrder = updatedOrder.filter(
+						(id) => id !== active?.data?.current?.elementId
+					);
+					updateOrder(updatedOrder);
+
+					// Now, insert the dragged element in the correct position (top or bottom)
+					if (position === "top") {
+						updatedOrder.splice(
+							elementIndex,
+							0,
+							active?.data?.current?.elementId as string
+						); // Insert before
+					} else {
+						updatedOrder.splice(
+							elementIndex + 1,
+							0,
+							active?.data?.current?.elementId as string
+						); // Insert after
+					}
+
+					updateOrder(updatedOrder); // Update the order after reordering
+				}
 			}
 
 			setDragableItems(null);
+			setSelectedElement(null);
 			console.log("Drag End", event);
 		},
 	});
@@ -108,6 +136,8 @@ const DragOverlayWrapper = () => {
 		const element = order.find(
 			(formElementId: string) => formElementId === id
 		);
+		console.log(element);
+		node = <RootFormDesignElement type={type} id={id} />;
 	}
 
 	return <DragOverlay>{node}</DragOverlay>;

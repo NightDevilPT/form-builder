@@ -12,6 +12,8 @@ interface FormElementsContextType {
 	) => void;
 	removeFormElement: (id: string) => void;
 	updateOrder: (newOrder: string[]) => void; // New function to update the order
+	setSelectedElement: (id: string | null) => void;
+	selectedElementId: string | null;
 }
 
 const FormElementsContext = createContext<FormElementsContextType | undefined>(
@@ -27,8 +29,11 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 }) => {
 	const [formElements, setFormElements] = useState<FormElements>({});
 	const [order, setOrder] = useState<string[]>([]);
+	const [selectedElementId, setSelectedElementId] = useState<string | null>(
+		null
+	);
 
-	const addFormElement = (type: keyof FormElements):string  => {
+	const addFormElement = (type: keyof FormElements): string => {
 		const element = new FormElement(
 			type as ElementsTypes,
 			FormElementTypes[type].sidebarElement.icon,
@@ -67,6 +72,10 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 		setOrder(newOrder);
 	};
 
+	const setSelectedElement = (id: string | null) => {
+		setSelectedElementId(id);
+	};
+
 	return (
 		<FormElementsContext.Provider
 			value={{
@@ -76,6 +85,8 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 				updateFormElementPayload,
 				removeFormElement,
 				updateOrder,
+				setSelectedElement,
+				selectedElementId,
 			}}
 		>
 			{children}

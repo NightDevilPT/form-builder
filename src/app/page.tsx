@@ -1,5 +1,3 @@
-import Image from "next/image";
-import FormBuilder from "./form-builder/components/FormBuilder";
 
 export default function Home() {
   return (
