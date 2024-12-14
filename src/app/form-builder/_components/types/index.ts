@@ -1,8 +1,9 @@
 import React from "react";
 
-export type ElementsTypes = "TextField" | "PasswordField" | "NumberField";
+export type ElementsTypes = "TextField";
 
 export interface FormElementPayload {
+  label:string;
   name: string;
   required?: boolean;
   placeholder?: string;
@@ -33,6 +34,7 @@ export class FormElement {
       required: false,
       placeholder: `Enter ${label.toLowerCase()}...`,
       type,
+      label:label,
       ...payload,
     };
   }

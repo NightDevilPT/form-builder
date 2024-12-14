@@ -34,7 +34,7 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 	);
 
 	const addFormElement = (type: keyof FormElements): string => {
-		const element:FormElement = new FormElement(
+		const element: FormElement = new FormElement(
 			type as ElementsTypes,
 			FormElementTypes[type].sidebarElement.icon,
 			FormElementTypes[type].sidebarElement.label
@@ -65,6 +65,7 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 		setOrder((prevOrder) =>
 			prevOrder.filter((elementId) => elementId !== id)
 		);
+		setSelectedElement(null);
 	};
 
 	// Update order function

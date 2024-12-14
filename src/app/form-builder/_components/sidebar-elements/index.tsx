@@ -2,17 +2,29 @@ import { FormElement } from "@/app/form-builder/_components/types";
 import { FormElementTypes } from "@/app/form-builder/_components/types/elements";
 import { useDraggable } from "@dnd-kit/core";
 import React from "react";
+import { useFormElements } from "../design-context";
+import FormElementProperties from "./FormElementProperties";
 
 const SideBarButtons = () => {
+	const { selectedElementId } = useFormElements();
 	return (
-		<div className="w-full h-auto grid grid-cols-2 gap-3 px-3">
-			{Object.keys(FormElementTypes).map((items: string) => (
-				<DragableButton
-					formElement={FormElementTypes[items]}
-					key={FormElementTypes[items].id}
-				/>
-			))}
-		</div>
+		<React.Fragment>
+			{!selectedElementId && (
+				<div className="w-full h-full grid grid-cols-2 gap-3 px-3 place-content-start place-items-start">
+					{Object.keys(FormElementTypes).map((items: string) => (
+						<DragableButton
+							formElement={FormElementTypes[items]}
+							key={FormElementTypes[items].id}
+						/>
+					))}
+				</div>
+			)}
+			{selectedElementId && (
+				<div className="w-full h-full px-3 grid grid-cols-1 gap-3 place-content-start place-items-start overflow-auto">
+					<FormElementProperties id={selectedElementId} />
+				</div>
+			)}
+		</React.Fragment>
 	);
 };
 
@@ -30,14 +42,14 @@ const DragableButton = ({ formElement }: { formElement: FormElement }) => {
 	return (
 		<button
 			ref={dragable.setNodeRef}
-			className={`w-full h-auto p-3 rounded-md border-divider border-1 place-items-center grid grid-cols-1 ${
+			className={`w-full h-auto p-3 rounded-md border-divider bg-background border-1 place-items-center grid grid-cols-1 hover:border-foreground-500 hover:bg-foreground-100/50 transition-all duration-300 ${
 				dragable.isDragging && "ring-2 ring-primary"
 			}`}
 			{...dragable.listeners}
 			{...dragable.attributes}
 		>
-			<Icon className="w-7 h-7 text-white" />
-			<span className="text-xs text-white">{label}</span>
+			<Icon className="w-7 h-7 text-foreground" />
+			<span className="text-xs text-foreground">{label}</span>
 		</button>
 	);
 };
@@ -51,10 +63,10 @@ export const DragableOverlayButton = (element: OverlayButton) => {
 	const { icon: Icon, label } = element;
 	return (
 		<button
-			className={`w-full h-auto p-3 rounded-md border-divider border-1 bg-slate-950 place-items-center grid grid-cols-1`}
+			className={`w-full h-auto p-3 rounded-md border-1 border-foreground dark:bg-background place-items-center grid grid-cols-1`}
 		>
-			<Icon className="w-7 h-7 text-white" />
-			<span className="text-xs text-white">{label}</span>
+			<Icon className="w-7 h-7 text-foreground" />
+			<span className="text-xs text-foreground">{label}</span>
 		</button>
 	);
 };
