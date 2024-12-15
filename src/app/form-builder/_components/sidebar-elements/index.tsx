@@ -43,7 +43,8 @@ const DragableButton = ({ formElement }: { formElement: FormElement }) => {
 		<button
 			ref={dragable.setNodeRef}
 			className={`w-full h-auto p-3 rounded-md border-divider bg-background border-1 place-items-center grid grid-cols-1 hover:border-foreground-500 hover:bg-foreground-100/50 transition-all duration-300 ${
-				dragable.isDragging && "ring-2 ring-primary"
+				dragable.isDragging &&
+				"ring-2 ring-foreground-500 bg-foreground-100/50"
 			}`}
 			{...dragable.listeners}
 			{...dragable.attributes}

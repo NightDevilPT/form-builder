@@ -1,14 +1,15 @@
 import React from "react";
 
-export type ElementsTypes = "TextField";
+export type ElementsTypes = "TextField" | "NumberField" | "PasswordField";
 
 export interface FormElementPayload {
-  label:string;
+  label: string;
   name: string;
   required?: boolean;
   placeholder?: string;
   options?: string[];
   type?: string;
+  [key: string]: string | boolean | string[] | undefined;
 }
 
 export class FormElement {

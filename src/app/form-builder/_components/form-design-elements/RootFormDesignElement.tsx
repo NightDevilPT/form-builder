@@ -4,6 +4,8 @@ import TextField from "./TextField";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { useFormElements } from "../design-context";
+import NumberField from "./NumberField";
+import PasswordField from "./PasswordField";
 
 const RootFormDesignElement = ({
 	type,
@@ -76,7 +78,7 @@ const RootFormDesignElement = ({
 				<div className="w-full h-1 rounded-full bg-white absolute bottom-0 left-0"></div>
 			)}
 			{mouseIsOver && (
-				<div className="w-full h-full absolute left-0 top-0 backdrop-blur grid grid-cols-[_1fr,40px] cursor-grab rounded-md">
+				<div className="w-full h-full absolute left-0 top-0 backdrop-blur grid grid-cols-[_1fr,40px] cursor-grab rounded-md overflow-hidden">
 					<span
 						className={`w-full h-full flex justify-center items-center text-foreground-500`}
 					>
@@ -109,6 +111,13 @@ const GetContext = ({
 	switch (type) {
 		case "TextField":
 			content = <TextField formElement={formElement} />;
+			break;
+		case "NumberField":
+			content = <NumberField formElement={formElement} />;
+			break;
+
+		case "PasswordField":
+			content = <PasswordField formElement={formElement} />;
 			break;
 		default:
 			content = <div>Unsupported Element</div>;

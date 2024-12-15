@@ -13,7 +13,7 @@ const DesignMode = () => {
 	});
 
 	return (
-		<div className="w-full h-full grid grid-cols-[1fr,350px] graph-content">
+		<div className="w-full h-full grid grid-cols-[1fr,350px] graph-content bg-background">
 			<div className="w-full h-full p-5 overflow-auto flex justify-center items-start">
 				<div
 					ref={dropArea.setNodeRef}
@@ -26,7 +26,7 @@ const DesignMode = () => {
 				>
 					{/* Display message when the order is empty and the drop area is not hovered */}
 					{order.length === 0 && !dropArea.isOver && (
-						<span className="text-white w-full h-full flex justify-center items-center">
+						<span className="text-foreground w-full h-full flex justify-center items-center">
 							Drop the element
 						</span>
 					)}
@@ -34,7 +34,7 @@ const DesignMode = () => {
 					{/* Show a visual indication when the drop area is hovered, and there are items */}
 					{dropArea.isOver && order.length === 0 && (
 						<div className="w-full p-1">
-							<div className="w-full h-16 rounded-md bg-default-100/50"></div>
+							<div className="w-full h-16 rounded-md bg-divider"></div>
 						</div>
 					)}
 
