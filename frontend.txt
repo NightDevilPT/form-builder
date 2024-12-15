@@ -5,7 +5,7 @@ import FormBuilder from './_components/FormBuilder';
 
 const Page = () => {
   return (
-    <div className="w-full h-screen">
+    <div className="w-full h-screen bg-background">
       <FormBuilder />
     </div>
   );
@@ -53,13 +53,13 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 	);
 
 	const addFormElement = (type: keyof FormElements): string => {
-		const element = new FormElement(
+		const element: FormElement = new FormElement(
 			type as ElementsTypes,
 			FormElementTypes[type].sidebarElement.icon,
 			FormElementTypes[type].sidebarElement.label
 		);
 		setFormElements((prev) => ({ ...prev, [element.id]: element }));
-		return element.id;
+		return element.id; // return the ID of the new form element
 	};
 
 	const updateFormElementPayload = (
@@ -84,6 +84,7 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 		setOrder((prevOrder) =>
 			prevOrder.filter((elementId) => elementId !== id)
 		);
+		setSelectedElement(null);
 	};
 
 	// Update order function
@@ -135,32 +136,38 @@ import RootFormDesignElement from "../form-design-elements/RootFormDesignElement
 import DragOverlayWrapper from "../drag-overlay/DragOverlay";
 
 const DesignMode = () => {
-	const { formElements,order } = useFormElements();
+	const { formElements, order, setSelectedElement } = useFormElements();
 	const dropArea = useDroppable({
 		id: "designer-drop-area",
 		data: { isDesignerDropArea: true },
 	});
 
 	return (
-		<div className="w-full h-full grid grid-cols-[1fr,350px] gap-3 bg-slate-900 graph-content">
-			<div className="w-full h-full overflow-y-auto p-5 flex justify-center items-center">
+		<div className="w-full h-full grid grid-cols-[1fr,350px] graph-content bg-background">
+			<div className="w-full h-full p-5 overflow-auto flex justify-center items-start">
 				<div
 					ref={dropArea.setNodeRef}
-					className={`w-4/5 h-full space-y-3 p-5 rounded-md bg-slate-950 ${
-						dropArea.isOver ? "ring-2 ring-primary" : ""
+					className={`w-4/5 h-auto min-h-full p-5 rounded-md bg-background space-y-3 ${
+						dropArea.isOver
+							? "ring-2 ring-foreground-400"
+							: "ring-2 ring-foreground-200"
 					}`}
+					onClick={() => setSelectedElement(null)}
 				>
 					{/* Display message when the order is empty and the drop area is not hovered */}
-          {order.length === 0 && !dropArea.isOver && (
-            <span className="text-white">Drop the element</span>
-          )}
+					{order.length === 0 && !dropArea.isOver && (
+						<span className="text-foreground w-full h-full flex justify-center items-center">
+							Drop the element
+						</span>
+					)}
 
-          {/* Show a visual indication when the drop area is hovered, and there are items */}
-          {dropArea.isOver && order.length === 0 && (
-            <div className="w-full p-1">
-              <div className="w-full h-[120px] rounded-md bg-primary/10"></div>
-            </div>
-          )}
+					{/* Show a visual indication when the drop area is hovered, and there are items */}
+					{dropArea.isOver && order.length === 0 && (
+						<div className="w-full p-1">
+							<div className="w-full h-16 rounded-md bg-divider"></div>
+						</div>
+					)}
+
 					{order.map((key) => (
 						<RootFormDesignElement
 							key={key}
@@ -170,7 +177,7 @@ const DesignMode = () => {
 					))}
 				</div>
 			</div>
-			<div className="w-full h-full overflow-y-auto py-4 bg-slate-950">
+			<div className="w-full h-full overflow-y-auto py-4 bg-background border-l-1 border-divider">
 				<SideBarButtons />
 			</div>
 			<DragOverlayWrapper />
@@ -215,82 +222,54 @@ const DragOverlayWrapper = () => {
 		},
 		onDragEnd: (event: DragEndEvent) => {
 			const { active, over } = event;
-
-			if (
-				over?.id === "designer-drop-area" &&
-				active.data.current?.isDesignBtnElement
-			) {
-				const type = active.data.current?.type;
+			const activeData = active.data.current;
+		  
+			if (over?.id === "designer-drop-area") {
+			  if (!activeData?.elementId) {
+				const type = activeData?.type;
 				if (type in FormElementTypes) {
-					const elementId:string = addFormElement(type);
-					order.push(elementId as string)
-					updateOrder(order);
+				  const elementId:any = addFormElement(type);
+				  order.push(elementId);
+				  updateOrder(order);
 				}
-			} else if (over?.id) {
-				const overData: string = over.id as string;
-				const [overId, position] = overData.split(":");
-
-				const elementIndex = order.findIndex(
-					(id: string) => id === overId
-				);
-				console.log(active, "ACTIVEIDDD");
-
-				if (!active.data?.current?.elementId) {
-					const type = active.data.current?.type;
-
-					if (type && type in FormElementTypes) {
-						const elementId = addFormElement(type); // Create new form element
-
-						if (elementId) {
-							const updatedOrder = [...order];
-							if (position === "top" && elementIndex !== -1) {
-								updatedOrder.splice(elementIndex, 0, elementId); // Insert before
-							} else if (
-								position === "bottom" &&
-								elementIndex !== -1
-							) {
-								updatedOrder.splice(
-									elementIndex + 1,
-									0,
-									elementId
-								); // Insert after
-							}
-							updateOrder(updatedOrder); // Update the order with new element
-						}
-					}
-				} else if (
-					elementIndex !== -1 &&
-					active?.data?.current?.elementId
-				) {
-					let updatedOrder = [...order];
-					updatedOrder = updatedOrder.filter(
-						(id) => id !== active?.data?.current?.elementId
-					);
-					updateOrder(updatedOrder);
-
-					// Now, insert the dragged element in the correct position (top or bottom)
-					if (position === "top") {
-						updatedOrder.splice(
-							elementIndex,
-							0,
-							active?.data?.current?.elementId as string
-						); // Insert before
-					} else {
-						updatedOrder.splice(
-							elementIndex + 1,
-							0,
-							active?.data?.current?.elementId as string
-						); // Insert after
-					}
-
-					updateOrder(updatedOrder); // Update the order after reordering
+			  } else if (activeData?.elementId) {
+				const activeId = activeData.elementId;
+				const newOrder = order.filter(id => id !== activeId);
+				newOrder.push(activeId);
+				updateOrder(newOrder);
+			  }
+			} else if (over?.id && (active?.id as string)?.includes("design-btn-")) {
+			  const [overId, position] = (over.id as string).split(":");
+			  const elementIndex = order.findIndex(id => id === overId);
+			  const type = activeData?.type;
+		  
+			  if (type in FormElementTypes) {
+				const elementId:any = addFormElement(type);
+				if (position === "top") {
+				  order.splice(elementIndex, 0, elementId);
+				} else {
+				  order.splice(elementIndex + 1, 0, elementId);
 				}
+			  }
+			} else if (over?.id && activeData?.elementId) {
+			  const [overId, position] = (over.id as string).split(":");
+			  const activeId = activeData.elementId;
+			  const newOrder = order.filter(id => id !== activeId);
+			  const elementIndex = newOrder.findIndex(id => id === overId);
+		  
+			  if (position === "top") {
+				newOrder.splice(elementIndex, 0, activeId);
+			  } else {
+				newOrder.splice(elementIndex + 1, 0, activeId);
+			  }
+			  updateOrder(newOrder);
 			}
-
+		  
 			setDragableItems(null);
 			setSelectedElement(null);
 			console.log("Drag End", event);
-		},
+		  }
+		  
 	});
 
 	// If there's nothing to drag, return null
@@ -335,17 +314,23 @@ export default DragOverlayWrapper;
 
 File Path: src\app\form-builder\_components\form-design-elements\NumberField.tsx
 Contents:
-import React from 'react'
-import { FormElement } from '../types'
+import React from "react";
+import { FormElement } from "../types";
 
-const NumberField = ({formElement}:{formElement:FormElement}) => {
-  console.log(formElement)
-  return (
-	<div>NumberField</div>
-  )
-}
+const NumberField = ({ formElement }: { formElement: FormElement }) => {
+	const { placeholder, label } = formElement.payload;
+	return (
+		<div className="w-full h-auto grid grid-cols-1 gap-2">
+			<div className="w-full h-auto p-0 text-sm px-1">{label}</div>
+			<div className="w-full h-auto px-3 py-1 rounded-md bg-default-100 text-foreground-400 text-base">
+				{placeholder}
+			</div>
+		</div>
+	);
+};
 
-export default NumberField
+export default NumberField;
+
 --------------------------------------------------
 
 File Path: src\app\form-builder\_components\form-design-elements\PasswordField.tsx
@@ -354,10 +339,15 @@ import React from 'react'
 import { FormElement } from '../types'
 
 const PasswordField = ({formElement}:{formElement:FormElement}) => {
-  console.log(formElement)
-  return (
-	<div>PasswordField</div>
-  )
+  const { placeholder, label } = formElement.payload;
+	return (
+		<div className="w-full h-auto grid grid-cols-1 gap-2">
+			<div className="w-full h-auto p-0 text-sm px-1">{label}</div>
+			<div className="w-full h-auto px-3 py-1 rounded-md bg-default-100 text-foreground-400 text-base">
+				{placeholder}
+			</div>
+		</div>
+	);
 }
 
 export default PasswordField
@@ -366,14 +356,13 @@ export default PasswordField
 File Path: src\app\form-builder\_components\form-design-elements\RootFormDesignElement.tsx
 Contents:
 import React, { useState } from "react";
-import { ElementsTypes } from "../types";
+import { ElementsTypes, FormElement } from "../types";
 import TextField from "./TextField";
-import NumberField from "./NumberField";
-import { FormElementTypes } from "../types/elements";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { FaRegTrashAlt } from "react-icons/fa";
-import PasswordField from "./PasswordField";
 import { useFormElements } from "../design-context";
+import NumberField from "./NumberField";
+import PasswordField from "./PasswordField";
 
 const RootFormDesignElement = ({
 	type,
@@ -383,7 +372,12 @@ const RootFormDesignElement = ({
 	id: string;
 }) => {
 	const [mouseIsOver, setMouseIsOver] = useState<boolean>(false);
-	const { setSelectedElement } = useFormElements();
+	const {
+		setSelectedElement,
+		removeFormElement,
+		selectedElementId,
+		formElements,
+	} = useFormElements();
 	const topHalf = useDroppable({
 		id: id + ":top",
 		data: {
@@ -412,23 +406,24 @@ const RootFormDesignElement = ({
 
 	return (
 		<div
-			className="relative w-full h-auto p-4 rounded-md border-1 border-divider overflow-hidden"
+			className={`relative w-full h-auto p-4 rounded-md border-1 border-divider hover:border-foreground-500 ${
+				selectedElementId === id && "border-foreground-500"
+			}`}
 			onMouseEnter={() => setMouseIsOver(true)}
 			onMouseLeave={() => setMouseIsOver(false)}
 			ref={dragable.setNodeRef}
 			{...dragable.listeners}
 			{...dragable.attributes}
 			onClick={(e) => {
-				e.stopPropagation()
-				setSelectedElement(id)
-				console.log(id,'ID CONSOLING')
+				e.stopPropagation();
+				setSelectedElement(id);
 			}}
 		>
 			<div
 				className="w-full h-1/2 rounded-full absolute top-0 left-0"
 				ref={topHalf.setNodeRef}
 			></div>
-			{getContent(type)}
+			<GetContext type={type} formElement={formElements[id]} />
 			<div
 				className="w-full h-1/2 rounded-full absolute bottom-0 left-0"
 				ref={bottomHalf.setNodeRef}
@@ -440,32 +435,46 @@ const RootFormDesignElement = ({
 				<div className="w-full h-1 rounded-full bg-white absolute bottom-0 left-0"></div>
 			)}
 			{mouseIsOver && (
-				<div className="w-full h-full absolute left-0 top-0 bg-slate-800/20 backdrop-blur grid grid-cols-[_1fr,40px] cursor-grab">
+				<div className="w-full h-full absolute left-0 top-0 backdrop-blur grid grid-cols-[_1fr,40px] cursor-grab rounded-md overflow-hidden">
 					<span
-						className={`w-full h-full flex justify-center items-center text-gray-500`}
+						className={`w-full h-full flex justify-center items-center text-foreground-500`}
 					>
 						Click or Drag and Drop to move element
 					</span>
-					<div className="w-full h-full bg-red-500 flex justify-center items-center cursor-pointer">
+					<button
+						className="w-full h-full bg-red-500 flex justify-center items-center cursor-pointer"
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							removeFormElement(id as string);
+						}}
+					>
 						<FaRegTrashAlt className="w-4 h-4 text-white" />
-					</div>
+					</button>
 				</div>
 			)}
 		</div>
 	);
 };
 
-const getContent = (type: ElementsTypes) => {
+const GetContext = ({
+	formElement,
+	type,
+}: {
+	formElement: FormElement;
+	type: ElementsTypes;
+}) => {
 	let content;
 	switch (type) {
 		case "TextField":
-			content = <TextField formElement={FormElementTypes[type]} />;
+			content = <TextField formElement={formElement} />;
 			break;
 		case "NumberField":
-			content = <NumberField formElement={FormElementTypes[type]} />;
+			content = <NumberField formElement={formElement} />;
 			break;
+
 		case "PasswordField":
-			content = <PasswordField formElement={FormElementTypes[type]} />;
+			content = <PasswordField formElement={formElement} />;
 			break;
 		default:
 			content = <div>Unsupported Element</div>;
@@ -479,55 +488,291 @@ export default RootFormDesignElement;
 
 File Path: src\app\form-builder\_components\form-design-elements\TextField.tsx
 Contents:
-import React from 'react'
-import { FormElement } from '../types'
+import React from "react";
+import { FormElement } from "../types";
 
-const TextField = ({formElement}:{formElement:FormElement}) => {
-  console.log(formElement)
-  return (
-	<div>TextField</div>
-  )
-}
+const TextField = ({ formElement }: { formElement: FormElement }) => {
+	const { placeholder, label } = formElement.payload;
+	return (
+		<div className="w-full h-auto grid grid-cols-1 gap-2">
+			<div className="w-full h-auto p-0 text-sm px-1">
+				{label}
+			</div>
+			<div className="w-full h-auto px-3 py-1 rounded-md bg-default-100 text-foreground-400 text-base">
+				{placeholder}
+			</div>
+		</div>
+	);
+};
 
-export default TextField
+export default TextField;
+
 --------------------------------------------------
 
 File Path: src\app\form-builder\_components\FormBuilder.tsx
 Contents:
-'use client';
+"use client";
 
-import { DndContext } from '@dnd-kit/core';
-import React, { useState } from 'react';
-import { PiSunBold, PiMoonStarsBold } from 'react-icons/pi';
-import { FormElementsProvider } from './design-context';
-import DesignMode from './design-mode';
+import { DndContext, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
+import React, { useEffect, useState } from "react";
+import { PiSunBold, PiMoonStarsBold } from "react-icons/pi";
+import { FormElementsProvider } from "./design-context";
+import DesignMode from "./design-mode";
+import { IoEye } from "react-icons/io5";
+import { FaCode } from "react-icons/fa6";
+import PreviewMode from "./preview-mode";
 
 const FormBuilder = () => {
-  const [theme, setTheme] = useState<boolean>(false);
+	const [theme, setTheme] = useState<boolean>(false);
+	const [preview, setPreview] = useState<"preview" | "code">("code");
+	const mouseSensor = useSensor(MouseSensor, {
+		activationConstraint: {
+			distance: 10, // 10px
+		},
+	});
+	const sensors = useSensors(mouseSensor);
+	useEffect(() => {
+		document.documentElement.className = theme ? "light" : "dark";
+	}, [theme]);
 
-  return (
-    <DndContext>
-      <FormElementsProvider>
-        <div className="w-full h-full grid grid-rows-[80px,1fr]">
-          <div className="w-full flex justify-between items-center px-5 border-b border-gray-800">
-            <h1 className="text-xl text-white">Project 1</h1>
-            <div className="flex items-center gap-1 relative">
-              <button className={`w-7 h-7 p-1 ${theme ? 'text-white' : 'text-gray-700'}`} onClick={() => setTheme(true)}>
-                <PiSunBold />
-              </button>
-              <button className={`w-7 h-7 p-1 ${theme ? 'text-gray-700' : 'text-white'}`} onClick={() => setTheme(false)}>
-                <PiMoonStarsBold />
-              </button>
-            </div>
-          </div>
-          <DesignMode />
-        </div>
-      </FormElementsProvider>
-    </DndContext>
-  );
+	return (
+		<DndContext sensors={sensors}>
+			<FormElementsProvider>
+				<div className="w-full h-full grid grid-rows-[80px,1fr]">
+					<div className="w-full flex justify-between items-center px-5 border-b border-divider">
+						<h1 className="text-xl text-foreground">Project 1</h1>
+						<div className="w-auto h-auto flex justify-center items-center gap-3">
+							<div className="flex items-center gap-1 relative border-1 border-divider rounded-full overflow-hidden px-1">
+								<button
+									className={`w-1/2 h-7 p-1 z-10 flex justify-center items-center ${
+										theme ? "text-white" : "text-gray-700"
+									}`}
+									onClick={() => {
+										setTheme(true);
+									}}
+								>
+									<PiSunBold />
+								</button>
+								<button
+									className={`w-1/2 flex justify-center items-center h-7 p-1 z-10 ${
+										theme ? "text-gray-700" : "text-white"
+									}`}
+									onClick={() => setTheme(false)}
+								>
+									<PiMoonStarsBold />
+								</button>
+								<div
+									className={`w-1/2 h-full rounded-sm bg-primary absolute top-0 transition-all duration-300 ${
+										theme ? "left-0" : "left-1/2"
+									}`}
+								></div>
+							</div>
+
+							<button
+								className="px-3 py-1 rounded-md bg-primary hover:bg-primary-500 transition-all duration-300 text-white flex justify-center items-center gap-2 text-sm"
+								onClick={() =>
+									setPreview(
+										preview === "code" ? "preview" : "code"
+									)
+								}
+							>
+								<span>
+									{preview === "preview" ? "Code" : "Preview"}
+								</span>
+								{preview === "preview" ? <FaCode /> : <IoEye />}
+							</button>
+						</div>
+					</div>
+					<div className="w-full h-full overflow-hidden">
+						{preview === "code" ? (
+							<DesignMode />
+						) : (
+							<PreviewMode />
+						)}
+					</div>
+				</div>
+			</FormElementsProvider>
+		</DndContext>
+	);
 };
 
 export default FormBuilder;
+
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\preview-mode\index.tsx
+Contents:
+import React from 'react'
+
+const PreviewMode = () => {
+  return (
+	<div className='w-full h-full graph-content bg-background flex justify-center p-5 items-start'>
+		<div className='h-auto w-2/3 rounded-md border-1 border-divider max-h-full bg-background overflow-auto p-3 flex justify-center items-center'>
+			Preview
+		</div>
+	</div>
+  )
+}
+
+export default PreviewMode
+--------------------------------------------------
+
+File Path: src\app\form-builder\_components\sidebar-elements\FormElementProperties.tsx
+Contents:
+import React from "react";
+import { useFormElements } from "../design-context";
+import { IoClose } from "react-icons/io5";
+import { getFieldType } from "../types/elements";
+import { ElementsTypes } from "../types";
+
+interface FormElementPropertiesProps {
+	id: string;
+}
+
+const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
+	id,
+}) => {
+	const { formElements, updateFormElementPayload, setSelectedElement } =
+		useFormElements();
+	const { label, placeholder, required, type } = formElements[id].payload;
+
+	const commonLabelStyle = "w-full h-auto text-foreground text-sm";
+	const commonInputStyle =
+		"w-full rounded text-base px-3 py-1 outline-none border-none bg-foreground-100";
+
+	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const { value, checked, name } = event.target;
+		const newValue = name === "required" ? checked : value;
+		updateFormElementPayload(id, { [name]: newValue });
+	};
+
+	return (
+		<div className="w-full h-auto grid grid-cols-1 gap-5">
+			<div className="w-full h-auto grid grid-cols-[1fr,40px] border-b-1 border-divider pb-3">
+				<h2 className="text-base text-foreground">Property</h2>
+				<button
+					className="w-full h-full text-foreground-500 hover:bg-foreground-500/30 hover:text-foreground transition-all duration-300 rounded-md flex justify-center items-center cursor-pointer"
+					onClick={() => setSelectedElement(null)}
+				>
+					<IoClose className="w-4 h-4" />
+				</button>
+			</div>
+
+			<div className="w-full h-auto grid grid-cols-1 gap-3 px-2">
+				{/* --------[ LABEL ]------- */}
+				<div className="w-full h-auto space-y-1">
+					<label className={commonLabelStyle}>Label</label>
+					<input
+						type="text"
+						name="label"
+						className={commonInputStyle}
+						value={label}
+						onChange={handleInputChange}
+					/>
+					<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
+						<span>- The label of the field</span>
+						<span>- It will be displayed above the field</span>
+					</div>
+				</div>
+
+				{/* --------[ INPUT TYPE ]------- */}
+				<div className="w-full h-auto space-y-1">
+					<label className={commonLabelStyle}>Input type</label>
+					<input
+						type="text"
+						className={`${commonInputStyle} text-foreground-400`}
+						value={getFieldType(type as ElementsTypes)}
+						disabled
+					/>
+					<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
+						<span>- The type of the field</span>
+						<span>- It will be a type of input</span>
+					</div>
+				</div>
+
+				{/* --------[ PLACEHOLDER ]------- */}
+				<div className="w-full h-auto space-y-1">
+					<label className={commonLabelStyle}>Placeholder</label>
+					<input
+						type="text"
+						name="placeholder"
+						className={commonInputStyle}
+						value={placeholder}
+						onChange={handleInputChange}
+					/>
+					<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
+						<span>- The placeholder of the field</span>
+						<span>
+							- It will be displayed as a placeholder in the field
+						</span>
+					</div>
+				</div>
+
+				{/* --------[ PASSWORD ]------- */}
+				{type === "PasswordField" && (
+					<div className="w-full h-auto space-y-1">
+						<label className={commonLabelStyle}>
+							Password Pattern
+						</label>
+						<input
+							type="text"
+							name="pattern"
+							className={commonInputStyle}
+							value={formElements[id].payload?.pattern as string}
+							pattern={
+								formElements[id].payload?.pattern as string
+							}
+							onChange={handleInputChange}
+						/>
+						<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
+							<span>- The Pattern of the Password</span>
+							<span>
+								- It will be displayed as a Pattern to show
+								Password
+							</span>
+						</div>
+					</div>
+				)}
+
+				{/* --------[ REQUIRED ]------- */}
+				<div className="w-full h-auto grid grid-cols-[1fr,80px] gap-1">
+					<div className="grid grid-cols-1 gap-0">
+						<label className={commonLabelStyle}>Required</label>
+						<label className="text-xs text-foreground-500">
+							- Marks the field as required
+						</label>
+					</div>
+					<div className="w-full h-full flex justify-end items-center">
+						<input
+							id="required"
+							name="required"
+							type="checkbox"
+							className="hidden"
+							checked={required}
+							onChange={handleInputChange}
+						/>
+						<label
+							htmlFor="required"
+							className={`w-12 h-6 border-2 rounded-full relative cursor-pointer p-1 ${
+								required
+									? "bg-primary-500 border-primary-500"
+									: "bg-foreground-200 border-foreground-200"
+							}`}
+						>
+							<span
+								className={`absolute top-0 ${
+									required ? "left-1/2" : "left-0"
+								} w-6 h-full bg-background dark:bg-foreground-800 rounded-full transition-all duration-200 shadow-md`}
+							/>
+						</label>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+export default FormElementProperties;
 
 --------------------------------------------------
 
@@ -537,17 +782,29 @@ import { FormElement } from "@/app/form-builder/_components/types";
 import { FormElementTypes } from "@/app/form-builder/_components/types/elements";
 import { useDraggable } from "@dnd-kit/core";
 import React from "react";
+import { useFormElements } from "../design-context";
+import FormElementProperties from "./FormElementProperties";
 
 const SideBarButtons = () => {
+	const { selectedElementId } = useFormElements();
 	return (
-		<div className="w-full h-auto grid grid-cols-2 gap-3 px-3">
-			{Object.keys(FormElementTypes).map((items: string) => (
-				<DragableButton
-					formElement={FormElementTypes[items]}
-					key={FormElementTypes[items].id}
-				/>
-			))}
-		</div>
+		<React.Fragment>
+			{!selectedElementId && (
+				<div className="w-full h-full grid grid-cols-2 gap-3 px-3 place-content-start place-items-start">
+					{Object.keys(FormElementTypes).map((items: string) => (
+						<DragableButton
+							formElement={FormElementTypes[items]}
+							key={FormElementTypes[items].id}
+						/>
+					))}
+				</div>
+			)}
+			{selectedElementId && (
+				<div className="w-full h-full px-3 grid grid-cols-1 gap-3 place-content-start place-items-start overflow-auto">
+					<FormElementProperties id={selectedElementId} />
+				</div>
+			)}
+		</React.Fragment>
 	);
 };
 
@@ -565,14 +822,15 @@ const DragableButton = ({ formElement }: { formElement: FormElement }) => {
 	return (
 		<button
 			ref={dragable.setNodeRef}
-			className={`w-full h-auto p-3 rounded-md border-divider border-1 place-items-center grid grid-cols-1 ${
-				dragable.isDragging && "ring-2 ring-primary"
+			className={`w-full h-auto p-3 rounded-md border-divider bg-background border-1 place-items-center grid grid-cols-1 hover:border-foreground-500 hover:bg-foreground-100/50 transition-all duration-300 ${
+				dragable.isDragging &&
+				"ring-2 ring-foreground-500 bg-foreground-100/50"
 			}`}
 			{...dragable.listeners}
 			{...dragable.attributes}
 		>
-			<Icon className="w-7 h-7 text-white" />
-			<span className="text-xs text-white">{label}</span>
+			<Icon className="w-7 h-7 text-foreground" />
+			<span className="text-xs text-foreground">{label}</span>
 		</button>
 	);
 };
@@ -586,10 +844,10 @@ export const DragableOverlayButton = (element: OverlayButton) => {
 	const { icon: Icon, label } = element;
 	return (
 		<button
-			className={`w-full h-auto p-3 rounded-md border-divider border-1 bg-slate-950 place-items-center grid grid-cols-1`}
+			className={`w-full h-auto p-3 rounded-md border-1 border-foreground dark:bg-background place-items-center grid grid-cols-1`}
 		>
-			<Icon className="w-7 h-7 text-white" />
-			<span className="text-xs text-white">{label}</span>
+			<Icon className="w-7 h-7 text-foreground" />
+			<span className="text-xs text-foreground">{label}</span>
 		</button>
 	);
 };
@@ -606,28 +864,49 @@ import { TbNumber123 } from "react-icons/tb";
 import { TbPasswordUser } from "react-icons/tb";
 
 export const FormElementTypes: FormElements = {
-  TextField: new FormElement("TextField", MdTextFields, "Text Field"),
-  NumberField: new FormElement("NumberField", TbNumber123, "Number Field"),
-  PasswordField: new FormElement("PasswordField", TbPasswordUser, "Password Field"),
+	TextField: new FormElement("TextField", MdTextFields, "Text Field"),
+	NumberField: new FormElement("NumberField", TbNumber123, "Number Field"),
+	PasswordField: new FormElement(
+		"PasswordField",
+		TbPasswordUser,
+		"Password Field",
+		{
+			pattern: "*",
+		}
+	),
 };
 
-// export const 
+export const getFieldType = (
+	field: string
+): "text" | "number" | "password" | undefined => {
+	switch (field) {
+		case FormElementTypes.TextField.type:
+			return "text";
+		case FormElementTypes.NumberField.type:
+			return "number";
+		case FormElementTypes.PasswordField.type:
+			return "password";
+		default:
+			return undefined; // Handle unknown fields
+	}
+};
+
 --------------------------------------------------
 
 File Path: src\app\form-builder\_components\types\index.ts
 Contents:
-// types/index.d.ts
-
 import React from "react";
 
-export type ElementsTypes = "TextField" | "PasswordField" | "NumberField";
+export type ElementsTypes = "TextField" | "NumberField" | "PasswordField";
 
 export interface FormElementPayload {
+  label: string;
   name: string;
   required?: boolean;
   placeholder?: string;
   options?: string[];
   type?: string;
+  [key: string]: string | boolean | string[] | undefined;
 }
 
 export class FormElement {
@@ -643,9 +922,9 @@ export class FormElement {
     type: ElementsTypes,
     icon: React.ElementType,
     label: string,
-    payload?: Partial<FormElementPayload>
+    payload: Partial<FormElementPayload> = {}
   ) {
-    this.id = crypto.randomUUID();
+    this.id = `${crypto.randomUUID()}`;
     this.type = type;
     this.sidebarElement = { icon, label };
     this.payload = {
@@ -653,6 +932,7 @@ export class FormElement {
       required: false,
       placeholder: `Enter ${label.toLowerCase()}...`,
       type,
+      label:label,
       ...payload,
     };
   }

@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { ElementsTypes, FormElement } from "../types";
-import TextField from "./TextField";
-import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { FaRegTrashAlt } from "react-icons/fa";
-import { useFormElements } from "../design-context";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+
+import TextField from "./TextField";
 import NumberField from "./NumberField";
 import PasswordField from "./PasswordField";
+import CheckboxField from "./CheckboxField";
+import { useFormElements } from "../design-context";
+import { ElementsTypes, FormElement } from "../types";
 
 const RootFormDesignElement = ({
 	type,
@@ -115,9 +117,11 @@ const GetContext = ({
 		case "NumberField":
 			content = <NumberField formElement={formElement} />;
 			break;
-
 		case "PasswordField":
 			content = <PasswordField formElement={formElement} />;
+			break;
+		case "CheckboxField":
+			content = <CheckboxField formElement={formElement} />;
 			break;
 		default:
 			content = <div>Unsupported Element</div>;

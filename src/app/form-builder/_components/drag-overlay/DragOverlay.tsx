@@ -105,10 +105,6 @@ const DragOverlayWrapper = () => {
 	if (isDesignerElement) {
 		const id = dragableItems.data.current?.elementId;
 		const type = dragableItems.data?.current?.type;
-		const element = order.find(
-			(formElementId: string) => formElementId === id
-		);
-		console.log(element);
 		node = <RootFormDesignElement type={type} id={id} />;
 	}
 

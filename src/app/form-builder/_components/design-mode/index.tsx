@@ -47,7 +47,7 @@ const DesignMode = () => {
 					))}
 				</div>
 			</div>
-			<div className="w-full h-full overflow-y-auto py-4 bg-background">
+			<div className="w-full h-full overflow-y-auto py-4 bg-background border-l-1 border-divider">
 				<SideBarButtons />
 			</div>
 			<DragOverlayWrapper />

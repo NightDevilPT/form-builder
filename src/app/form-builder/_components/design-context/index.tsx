@@ -1,5 +1,5 @@
 import React, { createContext, useState, ReactNode, useContext } from "react";
-import { ElementsTypes, FormElement, FormElements } from "../types";
+import { FormElement, FormElements } from "../types";
 import { FormElementTypes } from "../types/elements";
 
 interface FormElementsContextType {
@@ -34,13 +34,10 @@ export const FormElementsProvider: React.FC<FormElementsProviderProps> = ({
 	);
 
 	const addFormElement = (type: keyof FormElements): string => {
-		const element: FormElement = new FormElement(
-			type as ElementsTypes,
-			FormElementTypes[type].sidebarElement.icon,
-			FormElementTypes[type].sidebarElement.label
-		);
+		const element: FormElement = FormElementTypes[type];
+		element.id = crypto.randomUUID()
 		setFormElements((prev) => ({ ...prev, [element.id]: element }));
-		return element.id; // return the ID of the new form element
+		return element.id;
 	};
 
 	const updateFormElementPayload = (

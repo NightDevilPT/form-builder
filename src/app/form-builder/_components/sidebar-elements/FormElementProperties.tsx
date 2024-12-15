@@ -2,7 +2,8 @@ import React from "react";
 import { useFormElements } from "../design-context";
 import { IoClose } from "react-icons/io5";
 import { getFieldType } from "../types/elements";
-import { ElementsTypes } from "../types";
+import { ElementsTypes, OptionTypes } from "../types";
+import { LuPlus } from "react-icons/lu";
 
 interface FormElementPropertiesProps {
 	id: string;
@@ -13,7 +14,8 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 }) => {
 	const { formElements, updateFormElementPayload, setSelectedElement } =
 		useFormElements();
-	const { label, placeholder, required, type } = formElements[id].payload;
+	const { label, placeholder, required, type, name, options } =
+		formElements[id].payload;
 
 	const commonLabelStyle = "w-full h-auto text-foreground text-sm";
 	const commonInputStyle =
@@ -23,6 +25,39 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 		const { value, checked, name } = event.target;
 		const newValue = name === "required" ? checked : value;
 		updateFormElementPayload(id, { [name]: newValue });
+	};
+
+	const addNewOptions = () => {
+		// Determine the next index based on current options length
+		const nextIndex = options?.length || 0;
+
+		// Create a new option
+		const newOption: OptionTypes = {
+			label: `Option ${nextIndex + 1}`,
+			value: `option_${nextIndex + 1}`,
+		};
+
+		// Update form element payload
+		updateFormElementPayload(id, {
+			options: [...(options || []), newOption],
+		});
+	};
+
+	const handleOptionsChange = (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		const { name, value } = event.target;
+		const [key, indexString] = name.split("-");
+		const index = parseInt(indexString, 10);
+
+		if (!isNaN(index) && (key === "label" || key === "value")) {
+			const updatedOptions = [...(options || [])];
+			updatedOptions[index] = {
+				...updatedOptions[index],
+				[key]: value,
+			};
+			updateFormElementPayload(id, { options: updatedOptions });
+		}
 	};
 
 	return (
@@ -37,9 +72,9 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 				</button>
 			</div>
 
-			<div className="w-full h-auto grid grid-cols-1 gap-3 px-2">
+			<div className="w-full h-auto grid grid-cols-1 gap-3 ">
 				{/* --------[ LABEL ]------- */}
-				<div className="w-full h-auto space-y-1">
+				<div className="w-full h-auto space-y-1 border-1 border-divider pb-2 px-2 rounded-md">
 					<label className={commonLabelStyle}>Label</label>
 					<input
 						type="text"
@@ -54,8 +89,24 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 					</div>
 				</div>
 
+				{/* --------[ NAME ]------- */}
+				<div className="w-full h-auto space-y-1 border-1 border-divider px-2 pb-2 rounded-md">
+					<label className={commonLabelStyle}>Name</label>
+					<input
+						type="text"
+						name="name"
+						className={commonInputStyle}
+						value={name}
+						onChange={handleInputChange}
+					/>
+					<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
+						<span>- The label of the field</span>
+						<span>- It will be displayed above the field</span>
+					</div>
+				</div>
+
 				{/* --------[ INPUT TYPE ]------- */}
-				<div className="w-full h-auto space-y-1">
+				<div className="w-full h-auto space-y-1 border-1 border-divider px-2 pb-2 rounded-md">
 					<label className={commonLabelStyle}>Input type</label>
 					<input
 						type="text"
@@ -70,46 +121,107 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 				</div>
 
 				{/* --------[ PLACEHOLDER ]------- */}
-				<div className="w-full h-auto space-y-1">
-					<label className={commonLabelStyle}>Placeholder</label>
-					<input
-						type="text"
-						name="placeholder"
-						className={commonInputStyle}
-						value={placeholder}
-						onChange={handleInputChange}
-					/>
-					<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
-						<span>- The placeholder of the field</span>
-						<span>
-							- It will be displayed as a placeholder in the field
-						</span>
-					</div>
-				</div>
-
-				{/* --------[ PASSWORD ]------- */}
-				{type === "PasswordField" && (
-					<div className="w-full h-auto space-y-1">
-						<label className={commonLabelStyle}>Password Pattern</label>
+				{type !== "CheckboxField" && (
+					<div className="w-full h-auto space-y-1 border-1 border-divider px-2 pb-2 rounded-md">
+						<label className={commonLabelStyle}>Placeholder</label>
 						<input
 							type="text"
-							name="pattern"
+							name="placeholder"
 							className={commonInputStyle}
-							value={(formElements[id].payload?.pattern as string)}
-              pattern={(formElements[id].payload?.pattern as string)}
+							value={placeholder}
 							onChange={handleInputChange}
 						/>
 						<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
-							<span>- The Pattern of the Password</span>
+							<span>- The placeholder of the field</span>
 							<span>
-								- It will be displayed as a Pattern to show Password
+								- It will be displayed as a placeholder in the
+								field
 							</span>
 						</div>
 					</div>
 				)}
 
+				{/* --------[ PASSWORD ]------- */}
+				{type === "PasswordField" && (
+					<div className="w-full h-auto space-y-1 border-1 border-divider p-2 rounded-md">
+						<label className={commonLabelStyle}>
+							Password Pattern
+						</label>
+						<input
+							type="text"
+							name="pattern"
+							className={commonInputStyle}
+							value={formElements[id].payload?.pattern as string}
+							pattern={
+								formElements[id].payload?.pattern as string
+							}
+							onChange={handleInputChange}
+						/>
+						<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
+							<span>- The Pattern of the Password</span>
+							<span>
+								- It will be displayed as a Pattern to show
+								Password
+							</span>
+						</div>
+					</div>
+				)}
+
+				{type === "CheckboxField" && (
+					<div className="w-full h-auto space-y-1 border-1 border-divider rounded-md">
+						<label className={`${commonLabelStyle} px-2`}>
+							Options
+						</label>
+						<div className="w-full h-auto p-2 space-y-2 rounded">
+							{options?.map(
+								(
+									{ label, value }: OptionTypes,
+									index: number
+								) => (
+									<div
+										className="w-full h-auto space-y-2 border-1 px-2 pb-2 rounded border-divider"
+										key={"label-value-" + index}
+									>
+										<div className="w-full h-auto space-y-1">
+											<label className={`text-sm`}>
+												Option Label
+											</label>
+											<input
+												type="text"
+												name={`label-${index}`}
+												className={commonInputStyle}
+												value={label}
+												onChange={handleOptionsChange}
+											/>
+										</div>
+										<div className="w-full h-auto">
+											<label className={`text-sm`}>
+												Option Value
+											</label>
+											<input
+												type="text"
+												name={`value-${index}`}
+												className={commonInputStyle}
+												value={value}
+												onChange={handleOptionsChange}
+											/>
+										</div>
+									</div>
+								)
+							)}
+							<button
+								className="mt-2 w-full h-auto py-1 bg-foreground-500 rounded-md flex justify-center items-center gap-2 text-background text-sm hover:bg-foreground-900 transition-all duration-300"
+								onClick={addNewOptions}
+							>
+								<LuPlus className="w-4 h-4" />
+								<span>Add Options</span>
+							</button>
+						</div>
+					</div>
+				)}
+
 				{/* --------[ REQUIRED ]------- */}
-				<div className="w-full h-auto grid grid-cols-[1fr,80px] gap-1">
+				<div className="w-full h-auto grid grid-cols-[1fr,80px] gap-1 border-1 border-divider p-2 rounded-md">
 					<div className="grid grid-cols-1 gap-0">
 						<label className={commonLabelStyle}>Required</label>
 						<label className="text-xs text-foreground-500">
@@ -127,7 +239,7 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 						/>
 						<label
 							htmlFor="required"
-							className={`w-12 h-6 border-2 rounded-full relative cursor-pointer ${
+							className={`w-12 h-6 border-2 rounded-full relative cursor-pointer p-1 ${
 								required
 									? "bg-primary-500 border-primary-500"
 									: "bg-foreground-200 border-foreground-200"
@@ -136,7 +248,7 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 							<span
 								className={`absolute top-0 ${
 									required ? "left-1/2" : "left-0"
-								} w-6 h-full bg-foreground-800 rounded-full transition-all duration-200 shadow-md`}
+								} w-6 h-full bg-background dark:bg-foreground-800 rounded-full transition-all duration-200 shadow-md`}
 							/>
 						</label>
 					</div>
