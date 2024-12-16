@@ -74,10 +74,10 @@ const RootFormDesignElement = ({
 				ref={bottomHalf.setNodeRef}
 			></div>
 			{topHalf.isOver && (
-				<div className="w-full h-1 rounded-full bg-white absolute top-0 left-0"></div>
+				<div className="w-full h-1 rounded-full bg-foreground absolute top-0 left-0"></div>
 			)}
 			{bottomHalf.isOver && (
-				<div className="w-full h-1 rounded-full bg-white absolute bottom-0 left-0"></div>
+				<div className="w-full h-1 rounded-full bg-foreground absolute bottom-0 left-0"></div>
 			)}
 			{mouseIsOver && (
 				<div className="w-full h-full absolute left-0 top-0 backdrop-blur grid grid-cols-[_1fr,40px] cursor-grab rounded-md overflow-hidden">
@@ -91,6 +91,7 @@ const RootFormDesignElement = ({
 						onClick={(e) => {
 							e.preventDefault();
 							e.stopPropagation();
+							console.log(id,'PAYLOD')
 							removeFormElement(id as string);
 						}}
 					>

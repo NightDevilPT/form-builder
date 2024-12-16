@@ -4,6 +4,7 @@ import { IoClose } from "react-icons/io5";
 import { getFieldType } from "../types/elements";
 import { ElementsTypes, OptionTypes } from "../types";
 import { LuPlus } from "react-icons/lu";
+import { TbTrash } from "react-icons/tb";
 
 interface FormElementPropertiesProps {
 	id: string;
@@ -15,7 +16,7 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 	const { formElements, updateFormElementPayload, setSelectedElement } =
 		useFormElements();
 	const { label, placeholder, required, type, name, options } =
-		formElements[id].payload;
+		formElements[id]?.payload;
 
 	const commonLabelStyle = "w-full h-auto text-foreground text-sm";
 	const commonInputStyle =
@@ -41,6 +42,12 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 		updateFormElementPayload(id, {
 			options: [...(options || []), newOption],
 		});
+	};
+
+	const handleOptionDelete = (index: number) => {
+		// Filter out the option at the specified index
+		const updatedOptions = options?.filter((_, i) => i !== index) || [];
+		updateFormElementPayload(id, { options: updatedOptions });
 	};
 
 	const handleOptionsChange = (
@@ -179,33 +186,45 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 									index: number
 								) => (
 									<div
-										className="w-full h-auto space-y-2 border-1 px-2 pb-2 rounded border-divider"
+										className="w-full h-auto space-y-2 border-1 gap-2 grid grid-cols-[_1fr,40px] p-2 pt-0 rounded border-divider"
 										key={"label-value-" + index}
 									>
-										<div className="w-full h-auto space-y-1">
-											<label className={`text-sm`}>
-												Option Label
-											</label>
-											<input
-												type="text"
-												name={`label-${index}`}
-												className={commonInputStyle}
-												value={label}
-												onChange={handleOptionsChange}
-											/>
+										<div className="w-full h-auto space-y-2">
+											<div className="w-full h-auto space-y-1">
+												<label className={`text-sm`}>
+													Option Label
+												</label>
+												<input
+													type="text"
+													name={`label-${index}`}
+													className={commonInputStyle}
+													value={label}
+													onChange={
+														handleOptionsChange
+													}
+												/>
+											</div>
+											<div className="w-full h-auto">
+												<label className={`text-sm`}>
+													Option Value
+												</label>
+												<input
+													type="text"
+													name={`value-${index}`}
+													className={commonInputStyle}
+													value={value}
+													onChange={
+														handleOptionsChange
+													}
+												/>
+											</div>
 										</div>
-										<div className="w-full h-auto">
-											<label className={`text-sm`}>
-												Option Value
-											</label>
-											<input
-												type="text"
-												name={`value-${index}`}
-												className={commonInputStyle}
-												value={value}
-												onChange={handleOptionsChange}
-											/>
-										</div>
+										<button
+											className="w-full p-1 bg-red-500 rounded-md flex justify-center items-center"
+											onClick={()=>handleOptionDelete(index)}
+										>
+											<TbTrash className="w-full h-auto text-white" />
+										</button>
 									</div>
 								)
 							)}

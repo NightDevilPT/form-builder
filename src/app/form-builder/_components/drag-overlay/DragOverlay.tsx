@@ -30,7 +30,7 @@ const DragOverlayWrapper = () => {
 		onDragEnd: (event: DragEndEvent) => {
 			const { active, over } = event;
 			const activeData = active.data.current;
-		  
+
 			if (over?.id === "designer-drop-area") {
 			  if (!activeData?.elementId) {
 				const type = activeData?.type;
