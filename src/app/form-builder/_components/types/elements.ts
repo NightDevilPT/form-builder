@@ -17,17 +17,12 @@ export const FormElementTypes: FormElements = {
 			pattern: "*",
 		}
 	),
-	CheckboxField: new FormElement(
-		"CheckboxField",
-		TbCheckbox,
-		"Check Field",
-		{
-			options: [
-				{ label: "Option 1", value: "option1" },
-				{ label: "Option 2", value: "option2" },
-			],
-		}
-	),
+	CheckboxField: new FormElement("CheckboxField", TbCheckbox, "Check Field", {
+		options: [
+			{ label: "Option 1", value: "option1", key: crypto.randomUUID() },
+			{ label: "Option 2", value: "option2", key: crypto.randomUUID() },
+		],
+	}),
 };
 
 export const getFieldType = (

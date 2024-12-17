@@ -20,7 +20,7 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 
 	const commonLabelStyle = "w-full h-auto text-foreground text-sm";
 	const commonInputStyle =
-		"w-full rounded text-base px-3 py-1 outline-none border-none bg-foreground-100";
+		"w-full rounded text-sm px-3 py-1 outline-none border-none bg-foreground-100";
 
 	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const { value, checked, name } = event.target;
@@ -36,6 +36,7 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 		const newOption: OptionTypes = {
 			label: `Option ${nextIndex + 1}`,
 			value: `option_${nextIndex + 1}`,
+			key: crypto.randomUUID(),
 		};
 
 		// Update form element payload
@@ -182,48 +183,44 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 						<div className="w-full h-auto p-2 space-y-2 rounded">
 							{options?.map(
 								(
-									{ label, value }: OptionTypes,
+									{ label, value, key }: OptionTypes,
 									index: number
 								) => (
 									<div
-										className="w-full h-auto space-y-2 border-1 gap-2 grid grid-cols-[_1fr,40px] p-2 pt-0 rounded border-divider"
-										key={"label-value-" + index}
+										className="w-full h-auto border-1 gap-2 grid grid-cols-[1fr_1fr_40px] p-2 pt-0 rounded border-divider"
+										key={"label-value-" + key}
 									>
-										<div className="w-full h-auto space-y-2">
-											<div className="w-full h-auto space-y-1">
-												<label className={`text-sm`}>
-													Option Label
-												</label>
-												<input
-													type="text"
-													name={`label-${index}`}
-													className={commonInputStyle}
-													value={label}
-													onChange={
-														handleOptionsChange
-													}
-												/>
-											</div>
-											<div className="w-full h-auto">
-												<label className={`text-sm`}>
-													Option Value
-												</label>
-												<input
-													type="text"
-													name={`value-${index}`}
-													className={commonInputStyle}
-													value={value}
-													onChange={
-														handleOptionsChange
-													}
-												/>
-											</div>
+										<div className="w-full h-auto">
+											<label className={`text-xs`}>
+												Label
+											</label>
+											<input
+												type="text"
+												name={`label-${index}`}
+												className={commonInputStyle}
+												value={label}
+												onChange={handleOptionsChange}
+											/>
+										</div>
+										<div className="w-full h-auto">
+											<label className={`text-xs`}>
+												Value
+											</label>
+											<input
+												type="text"
+												name={`value-${index}`}
+												className={commonInputStyle}
+												value={value}
+												onChange={handleOptionsChange}
+											/>
 										</div>
 										<button
-											className="w-full p-1 bg-red-500 rounded-md flex justify-center items-center"
-											onClick={()=>handleOptionDelete(index)}
+											className="w-full h-auto mt-2 bg-red-500 rounded-md flex justify-center items-center"
+											onClick={() =>
+												handleOptionDelete(index)
+											}
 										>
-											<TbTrash className="w-full h-auto text-white" />
+											<TbTrash className="text-base text-white" />
 										</button>
 									</div>
 								)
