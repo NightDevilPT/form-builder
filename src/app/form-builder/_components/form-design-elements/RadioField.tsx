@@ -1,11 +1,11 @@
 import React from "react";
 import { FormElement, OptionTypes } from "../types";
 import {
-	MdOutlineCheckBox,
-	MdOutlineCheckBoxOutlineBlank,
+	MdRadioButtonChecked,
+	MdRadioButtonUnchecked,
 } from "react-icons/md";
 
-const CheckboxField = ({ formElement }: { formElement: FormElement }) => {
+const RadioField = ({ formElement }: { formElement: FormElement }) => {
 	const { label, options } = formElement.payload;
 	return (
 		<div className="w-full h-auto grid grid-cols-1 gap-2">
@@ -18,9 +18,9 @@ const CheckboxField = ({ formElement }: { formElement: FormElement }) => {
 							key={items.label}
 						>
 							{items.defaultChecked ? (
-								<MdOutlineCheckBox className="w-4 h-4" />
+								<MdRadioButtonChecked className="w-4 h-4" />
 							) : (
-								<MdOutlineCheckBoxOutlineBlank className="w-4 h-4" />
+								<MdRadioButtonUnchecked className="w-4 h-4" />
 							)}
 							<span className="text-sm">{items.label}</span>
 						</div>
@@ -30,4 +30,4 @@ const CheckboxField = ({ formElement }: { formElement: FormElement }) => {
 	);
 };
 
-export default CheckboxField;
+export default RadioField;

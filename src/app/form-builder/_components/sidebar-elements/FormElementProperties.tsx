@@ -20,7 +20,7 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 
 	const commonLabelStyle = "w-full h-auto text-foreground text-sm";
 	const commonInputStyle =
-		"w-full rounded text-sm px-3 py-1 outline-none border-none bg-foreground-100";
+		"w-full rounded text-xs px-3 py-1 outline-none border-none bg-foreground-100";
 
 	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const { value, checked, name } = event.target;
@@ -66,6 +66,21 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 			};
 			updateFormElementPayload(id, { options: updatedOptions });
 		}
+	};
+
+	const handleDefaultOptionChange = (index: number) => {
+		const updatedOptions = [...(options || [])];
+
+		if (type === "RadioField") {
+			// Reset all options if RadioField is selected
+			updatedOptions.forEach((option) => (option.defaultChecked = false));
+		}
+
+		// Toggle the selected option
+		updatedOptions[index].defaultChecked =
+			!updatedOptions[index].defaultChecked;
+
+		updateFormElementPayload(id, { options: updatedOptions });
 	};
 
 	return (
@@ -175,7 +190,7 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 					</div>
 				)}
 
-				{type === "CheckboxField" && (
+				{(type === "CheckboxField" || type === "RadioField") && (
 					<div className="w-full h-auto space-y-1 border-1 border-divider rounded-md">
 						<label className={`${commonLabelStyle} px-2`}>
 							Options
@@ -183,11 +198,11 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 						<div className="w-full h-auto p-2 space-y-2 rounded">
 							{options?.map(
 								(
-									{ label, value, key }: OptionTypes,
+									{ label, value, key, defaultChecked }: OptionTypes,
 									index: number
 								) => (
 									<div
-										className="w-full h-auto border-1 gap-2 grid grid-cols-[1fr_1fr_40px] p-2 pt-0 rounded border-divider"
+										className="w-full h-auto border-1 space-y-2 p-2 pt-0 rounded border-divider"
 										key={"label-value-" + key}
 									>
 										<div className="w-full h-auto">
@@ -214,14 +229,28 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 												onChange={handleOptionsChange}
 											/>
 										</div>
-										<button
-											className="w-full h-auto mt-2 bg-red-500 rounded-md flex justify-center items-center"
-											onClick={() =>
-												handleOptionDelete(index)
-											}
-										>
-											<TbTrash className="text-base text-white" />
-										</button>
+										<div className="grid grid-cols-[_1fr,50px]">
+											<div className="w-full h-auto flex justify-start items-center gap-2">
+												<input
+													type={type === "CheckboxField" ? "checkbox" : "radio"}
+													name={type==="CheckboxField"?`defaultChecked-${index}`:`defaultChecked`}
+													className={`w-auto`}
+													checked={defaultChecked || false}
+													onChange={() => handleDefaultOptionChange(index)}
+												/>
+												<label className={`text-xs flex-1`}>
+													Mark as select
+												</label>
+											</div>
+											<button
+												className="w-full h-auto py-1 bg-red-500 rounded-md flex justify-center items-center"
+												onClick={() =>
+													handleOptionDelete(index)
+												}
+											>
+												<TbTrash className="text-base text-white" />
+											</button>
+										</div>
 									</div>
 								)
 							)}

@@ -4,12 +4,14 @@ export type ElementsTypes =
 	| "TextField"
 	| "NumberField"
 	| "PasswordField"
-	| "CheckboxField";
+	| "CheckboxField"
+	| "RadioField";
 
 export interface OptionTypes {
 	label: string;
 	value: string;
 	key:string;
+	defaultChecked?:boolean;
 }
 
 export interface FormElementPayload {

@@ -8,6 +8,7 @@ import PasswordField from "./PasswordField";
 import CheckboxField from "./CheckboxField";
 import { useFormElements } from "../design-context";
 import { ElementsTypes, FormElement } from "../types";
+import RadioField from "./RadioField";
 
 const RootFormDesignElement = ({
 	type,
@@ -91,7 +92,7 @@ const RootFormDesignElement = ({
 						onClick={(e) => {
 							e.preventDefault();
 							e.stopPropagation();
-							console.log(id,'PAYLOD')
+							console.log(id, "PAYLOD");
 							removeFormElement(id as string);
 						}}
 					>
@@ -123,6 +124,9 @@ const GetContext = ({
 			break;
 		case "CheckboxField":
 			content = <CheckboxField formElement={formElement} />;
+			break;
+		case "RadioField":
+			content = <RadioField formElement={formElement} />;
 			break;
 		default:
 			content = <div>Unsupported Element</div>;

@@ -1,7 +1,7 @@
 // elements.ts
 
 import { FormElement, FormElements } from ".";
-import { MdTextFields } from "react-icons/md";
+import { MdOutlineRadioButtonChecked, MdTextFields } from "react-icons/md";
 import { TbNumber123 } from "react-icons/tb";
 import { TbPasswordUser } from "react-icons/tb";
 import { TbCheckbox } from "react-icons/tb";
@@ -18,6 +18,12 @@ export const FormElementTypes: FormElements = {
 		}
 	),
 	CheckboxField: new FormElement("CheckboxField", TbCheckbox, "Check Field", {
+		options: [
+			{ label: "Option 1", value: "option1", key: crypto.randomUUID() },
+			{ label: "Option 2", value: "option2", key: crypto.randomUUID() },
+		],
+	}),
+	RadioField: new FormElement("RadioField", MdOutlineRadioButtonChecked, "Radio Field", {
 		options: [
 			{ label: "Option 1", value: "option1", key: crypto.randomUUID() },
 			{ label: "Option 2", value: "option2", key: crypto.randomUUID() },
