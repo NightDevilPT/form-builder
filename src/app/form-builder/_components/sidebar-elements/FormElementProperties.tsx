@@ -6,6 +6,7 @@ import { ElementsTypes, OptionTypes } from "../types";
 import { LuPlus } from "react-icons/lu";
 import { TbTrash } from "react-icons/tb";
 import { Field } from "./Field";
+import FieldOption from "./FieldOption";
 
 interface FormElementPropertiesProps {
 	id: string;
@@ -170,82 +171,22 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 						</label>
 						<div className="w-full h-auto p-2 space-y-2 rounded">
 							{options?.map(
-								(
-									{
-										label,
-										value,
-										key,
-										defaultChecked,
-									}: OptionTypes,
-									index: number
-								) => (
-									<div
-										className="w-full h-auto border-1 space-y-2 p-2 pt-0 rounded border-divider"
-										key={"label-value-" + key}
-									>
-										<div className="w-full h-auto">
-											<label className={`text-xs`}>
-												Label
-											</label>
-											<input
-												type="text"
-												name={`label-${index}`}
-												className={commonInputStyle}
-												value={label}
-												onChange={handleOptionsChange}
-											/>
-										</div>
-										<div className="w-full h-auto">
-											<label className={`text-xs`}>
-												Value
-											</label>
-											<input
-												type="text"
-												name={`value-${index}`}
-												className={commonInputStyle}
-												value={value}
-												onChange={handleOptionsChange}
-											/>
-										</div>
-										<div className="grid grid-cols-[_1fr,50px]">
-											<div className="w-full h-auto flex justify-start items-center gap-2">
-												<input
-													type={
-														type === "CheckboxField"
-															? "checkbox"
-															: "radio"
-													}
-													name={
-														type === "CheckboxField"
-															? `defaultChecked-${index}`
-															: `defaultChecked`
-													}
-													className={`w-auto`}
-													checked={
-														defaultChecked || false
-													}
-													onChange={() =>
-														handleDefaultOptionChange(
-															index
-														)
-													}
-												/>
-												<label
-													className={`text-xs flex-1`}
-												>
-													Mark as select
-												</label>
-											</div>
-											<button
-												className="w-full h-auto py-1 bg-red-500 rounded-md flex justify-center items-center"
-												onClick={() =>
-													handleOptionDelete(index)
-												}
-											>
-												<TbTrash className="text-base text-white" />
-											</button>
-										</div>
-									</div>
+								(option: OptionTypes, index: number) => (
+									<FieldOption
+										key={option.key} 
+										label={option.label}
+										value={option.value}
+										defaultChecked={option.defaultChecked}
+										type={type}
+										index={index}
+										handleOptionsChange={
+											handleOptionsChange
+										}
+										handleDefaultOptionChange={
+											handleDefaultOptionChange
+										}
+										handleOptionDelete={handleOptionDelete}
+									/>
 								)
 							)}
 							<button
