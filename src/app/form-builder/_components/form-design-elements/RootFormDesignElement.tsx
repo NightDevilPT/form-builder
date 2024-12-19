@@ -9,6 +9,7 @@ import CheckboxField from "./CheckboxField";
 import { useFormElements } from "../design-context";
 import { ElementsTypes, FormElement } from "../types";
 import RadioField from "./RadioField";
+import SelectField from "./SelectField";
 
 const RootFormDesignElement = ({
 	type,
@@ -127,6 +128,9 @@ const GetContext = ({
 			break;
 		case "RadioField":
 			content = <RadioField formElement={formElement} />;
+			break;
+		case "SelectField":
+			content = <SelectField formElement={formElement} />;
 			break;
 		default:
 			content = <div>Unsupported Element</div>;

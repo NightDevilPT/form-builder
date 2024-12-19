@@ -5,13 +5,14 @@ export type ElementsTypes =
 	| "NumberField"
 	| "PasswordField"
 	| "CheckboxField"
-	| "RadioField";
+	| "RadioField"
+	| "SelectField";
 
 export interface OptionTypes {
 	label: string;
 	value: string;
-	key:string;
-	defaultChecked?:boolean;
+	key: string;
+	defaultChecked?: boolean;
 }
 
 export interface FormElementPayload {
@@ -21,6 +22,8 @@ export interface FormElementPayload {
 	placeholder?: string;
 	options?: OptionTypes[];
 	type?: string;
+	pattern?: string;
+	isMulti?: boolean;
 	[key: string]: string | boolean | string[] | OptionTypes[] | undefined;
 }
 
@@ -48,9 +51,14 @@ export class FormElement {
 			placeholder: `Enter ${label.toLowerCase()}...`,
 			type,
 			label: label,
-			options:payload.options ?? [
-				{ label: "Option 1", value: "option1",key:crypto.randomUUID() },
+			options: payload.options ?? [
+				{
+					label: "Option 1",
+					value: "option1",
+					key: crypto.randomUUID(),
+				},
 			],
+			pattern: "*",
 			...payload,
 		};
 	}
@@ -59,3 +67,20 @@ export class FormElement {
 export type FormElements = {
 	[formElementId: string]: FormElement;
 };
+
+export const COMMON_STYLES = {
+	label: "w-full h-auto text-foreground text-sm",
+	input: "w-full rounded text-xs px-3 py-1 outline-none border-none bg-foreground-100",
+	container:
+		"w-full h-auto space-y-1 border-1 border-divider px-2 pb-2 rounded-md",
+	helpText: "w-full h-auto grid grid-cols-1 text-xs text-foreground-500",
+};
+
+export interface FieldProps {
+	label: string;
+	name: string;
+	value: string;
+	onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	disabled?: boolean;
+	helpText?: string[];
+}

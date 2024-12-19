@@ -5,7 +5,7 @@ import {
 	MdOutlineCheckBoxOutlineBlank,
 } from "react-icons/md";
 
-const CheckboxField = ({ formElement }: { formElement: FormElement }) => {
+const SelectField = ({ formElement }: { formElement: FormElement }) => {
 	const { required, label, options } = formElement.payload;
 	return (
 		<div className="w-full h-auto grid grid-cols-1 gap-2">
@@ -33,4 +33,4 @@ const CheckboxField = ({ formElement }: { formElement: FormElement }) => {
 	);
 };
 
-export default CheckboxField;
+export default SelectField;

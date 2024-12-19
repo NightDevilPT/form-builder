@@ -6,10 +6,13 @@ import {
 } from "react-icons/md";
 
 const RadioField = ({ formElement }: { formElement: FormElement }) => {
-	const { label, options } = formElement.payload;
+	const { label, required, options } = formElement.payload;
 	return (
 		<div className="w-full h-auto grid grid-cols-1 gap-2">
-			<div className="w-full h-auto p-0 text-sm px-1">{label}</div>
+			<div className="w-full h-auto p-0 text-sm px-1 space-x-1">
+				<label>{label}</label>
+				{required && <span className=" text-red-500">*</span>}
+			</div>
 			<div className="w-full h-auto flex justify-start gap-2 items-start flex-wrap">
 				{options &&
 					options.map((items: OptionTypes) => (

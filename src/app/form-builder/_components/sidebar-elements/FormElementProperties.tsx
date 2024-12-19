@@ -5,6 +5,7 @@ import { getFieldType } from "../types/elements";
 import { ElementsTypes, OptionTypes } from "../types";
 import { LuPlus } from "react-icons/lu";
 import { TbTrash } from "react-icons/tb";
+import { Field } from "./Field";
 
 interface FormElementPropertiesProps {
 	id: string;
@@ -97,97 +98,69 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 
 			<div className="w-full h-auto grid grid-cols-1 gap-3 ">
 				{/* --------[ LABEL ]------- */}
-				<div className="w-full h-auto space-y-1 border-1 border-divider pb-2 px-2 rounded-md">
-					<label className={commonLabelStyle}>Label</label>
-					<input
-						type="text"
-						name="label"
-						className={commonInputStyle}
-						value={label}
-						onChange={handleInputChange}
-					/>
-					<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
-						<span>- The label of the field</span>
-						<span>- It will be displayed above the field</span>
-					</div>
-				</div>
+				<Field
+					label="Label"
+					name="label"
+					value={label}
+					onChange={handleInputChange}
+					helpText={[
+						"The label of the field",
+						"It will be displayed above the field",
+					]}
+				/>
 
 				{/* --------[ NAME ]------- */}
-				<div className="w-full h-auto space-y-1 border-1 border-divider px-2 pb-2 rounded-md">
-					<label className={commonLabelStyle}>Name</label>
-					<input
-						type="text"
-						name="name"
-						className={commonInputStyle}
-						value={name}
-						onChange={handleInputChange}
-					/>
-					<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
-						<span>- The label of the field</span>
-						<span>- It will be displayed above the field</span>
-					</div>
-				</div>
+				<Field
+					label="Name"
+					name="name"
+					value={name}
+					onChange={handleInputChange}
+					helpText={[
+						"The name of the field",
+						"It will be a name of that input",
+					]}
+				/>
 
 				{/* --------[ INPUT TYPE ]------- */}
-				<div className="w-full h-auto space-y-1 border-1 border-divider px-2 pb-2 rounded-md">
-					<label className={commonLabelStyle}>Input type</label>
-					<input
-						type="text"
-						className={`${commonInputStyle} text-foreground-400`}
-						value={getFieldType(type as ElementsTypes)}
-						disabled
-					/>
-					<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
-						<span>- The type of the field</span>
-						<span>- It will be a type of input</span>
-					</div>
-				</div>
+				<Field
+					label="Input type"
+					name="type"
+					value={getFieldType(type as ElementsTypes)}
+					onChange={handleInputChange}
+					helpText={[
+						"The type of the field",
+						"It will be a type of input",
+					]}
+					disabled
+				/>
 
 				{/* --------[ PLACEHOLDER ]------- */}
-				{type !== "CheckboxField" && (
-					<div className="w-full h-auto space-y-1 border-1 border-divider px-2 pb-2 rounded-md">
-						<label className={commonLabelStyle}>Placeholder</label>
-						<input
-							type="text"
-							name="placeholder"
-							className={commonInputStyle}
-							value={placeholder}
-							onChange={handleInputChange}
-						/>
-						<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
-							<span>- The placeholder of the field</span>
-							<span>
-								- It will be displayed as a placeholder in the
-								field
-							</span>
-						</div>
-					</div>
+				{type !== "CheckboxField" && type !== "RadioField" && (
+					<Field
+						label="Placeholder"
+						name="placeholder"
+						value={placeholder || ""}
+						onChange={handleInputChange}
+						helpText={[
+							"The placeholder of the field",
+							"It will be displayed as a placeholder in the field",
+						]}
+						disabled
+					/>
 				)}
 
 				{/* --------[ PASSWORD ]------- */}
 				{type === "PasswordField" && (
-					<div className="w-full h-auto space-y-1 border-1 border-divider p-2 rounded-md">
-						<label className={commonLabelStyle}>
-							Password Pattern
-						</label>
-						<input
-							type="text"
-							name="pattern"
-							className={commonInputStyle}
-							value={formElements[id].payload?.pattern as string}
-							pattern={
-								formElements[id].payload?.pattern as string
-							}
-							onChange={handleInputChange}
-						/>
-						<div className="w-full h-auto grid grid-cols-1 text-xs text-foreground-500">
-							<span>- The Pattern of the Password</span>
-							<span>
-								- It will be displayed as a Pattern to show
-								Password
-							</span>
-						</div>
-					</div>
+					<Field
+						label="Password Pattern"
+						name="pattern"
+						value={formElements[id].payload?.pattern as string}
+						onChange={handleInputChange}
+						helpText={[
+							"The Pattern of the Password",
+							"It will be displayed as a Pattern to show Password",
+						]}
+					/>
 				)}
 
 				{(type === "CheckboxField" || type === "RadioField") && (
@@ -198,7 +171,12 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 						<div className="w-full h-auto p-2 space-y-2 rounded">
 							{options?.map(
 								(
-									{ label, value, key, defaultChecked }: OptionTypes,
+									{
+										label,
+										value,
+										key,
+										defaultChecked,
+									}: OptionTypes,
 									index: number
 								) => (
 									<div
@@ -232,13 +210,29 @@ const FormElementProperties: React.FC<FormElementPropertiesProps> = ({
 										<div className="grid grid-cols-[_1fr,50px]">
 											<div className="w-full h-auto flex justify-start items-center gap-2">
 												<input
-													type={type === "CheckboxField" ? "checkbox" : "radio"}
-													name={type==="CheckboxField"?`defaultChecked-${index}`:`defaultChecked`}
+													type={
+														type === "CheckboxField"
+															? "checkbox"
+															: "radio"
+													}
+													name={
+														type === "CheckboxField"
+															? `defaultChecked-${index}`
+															: `defaultChecked`
+													}
 													className={`w-auto`}
-													checked={defaultChecked || false}
-													onChange={() => handleDefaultOptionChange(index)}
+													checked={
+														defaultChecked || false
+													}
+													onChange={() =>
+														handleDefaultOptionChange(
+															index
+														)
+													}
 												/>
-												<label className={`text-xs flex-1`}>
+												<label
+													className={`text-xs flex-1`}
+												>
 													Mark as select
 												</label>
 											</div>

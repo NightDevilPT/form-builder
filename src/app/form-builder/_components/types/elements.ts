@@ -5,6 +5,7 @@ import { MdOutlineRadioButtonChecked, MdTextFields } from "react-icons/md";
 import { TbNumber123 } from "react-icons/tb";
 import { TbPasswordUser } from "react-icons/tb";
 import { TbCheckbox } from "react-icons/tb";
+import { GoSingleSelect } from "react-icons/go";
 
 export const FormElementTypes: FormElements = {
 	TextField: new FormElement("TextField", MdTextFields, "Text Field"),
@@ -23,17 +24,49 @@ export const FormElementTypes: FormElements = {
 			{ label: "Option 2", value: "option2", key: crypto.randomUUID() },
 		],
 	}),
-	RadioField: new FormElement("RadioField", MdOutlineRadioButtonChecked, "Radio Field", {
-		options: [
-			{ label: "Option 1", value: "option1", key: crypto.randomUUID() },
-			{ label: "Option 2", value: "option2", key: crypto.randomUUID() },
-		],
-	}),
+	RadioField: new FormElement(
+		"RadioField",
+		MdOutlineRadioButtonChecked,
+		"Radio Field",
+		{
+			options: [
+				{
+					label: "Option 1",
+					value: "option1",
+					key: crypto.randomUUID(),
+				},
+				{
+					label: "Option 2",
+					value: "option2",
+					key: crypto.randomUUID(),
+				},
+			],
+		}
+	),
+	SelectField: new FormElement(
+		"SelectField",
+		GoSingleSelect,
+		"Select Field",
+		{
+			options: [
+				{
+					label: "Option 1",
+					value: "option1",
+					key: crypto.randomUUID(),
+				},
+				{
+					label: "Option 2",
+					value: "option2",
+					key: crypto.randomUUID(),
+				},
+			],
+		}
+	),
 };
 
 export const getFieldType = (
 	field: string
-): "text" | "number" | "password" | "checkbox" | undefined => {
+): "text" | "number" | "password" | "checkbox" => {
 	switch (field) {
 		case FormElementTypes.TextField.type:
 			return "text";
@@ -44,6 +77,6 @@ export const getFieldType = (
 		case FormElementTypes.CheckboxField.type:
 			return "checkbox";
 		default:
-			return undefined; // Handle unknown fields
+			return 'text'; // Handle unknown fields
 	}
 };
